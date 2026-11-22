@@ -1,0 +1,18 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function isMember() {
+      return signedIn() && (request.auth.token.email.lower() in ['info@trustkeyper.com', 'amanmaheshwari900@gmail.com']
+        || firestore.exists(/databases/(default)/documents/access/$(request.auth.token.email.lower())));
+    }
+    match /feedback/{file} {
+      allow read: if isMember();
+      allow create: if isMember() && request.resource.size < 15 * 1024 * 1024 && request.resource.contentType.matches('audio/.*');
+    }
+    match /photos/{file} {
+      allow read, delete: if isMember();
+      allow create: if isMember() && request.resource.size < 10 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
