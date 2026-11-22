@@ -529,6 +529,17 @@ details.fold>summary{cursor:pointer;font-weight:700;color:var(--accent);padding:
 .tedit{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:8px}.tedit .lab{display:flex;gap:6px;align-items:center;font-weight:700;margin:8px 0 0}.tedit .lab svg{width:16px;height:16px}
 .tachips{display:flex;flex-wrap:wrap;gap:6px}.tachips small{margin-left:6px;opacity:.7}.tawarn{display:flex;gap:8px;background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:10px 12px;font-size:13.5px}.tawarn svg{width:16px;height:16px;flex:none;margin-top:2px}
 .tcount{display:flex;gap:6px;align-items:center;color:var(--muted);margin:4px 0}.tcount svg{width:16px;height:16px}.tfee.money{max-width:260px}
+.callbtn{background:#e7f7ee;border-color:#b5e2c7;color:#137a43;font-weight:700}
+.capps{display:grid;gap:8px}.capp{display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);font:inherit;cursor:pointer}.capp:hover{border-color:var(--accent)}.capp.last{border-color:var(--accent);background:var(--green-soft)}.capp svg{width:22px;height:22px;color:var(--accent);flex:none}.capp small{display:block;color:var(--muted);font-size:12.5px}
+#callpanel .callpanel{position:fixed;top:12px;right:12px;bottom:12px;width:min(620px,48vw);z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 48px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden}
+body.withcall #main{margin-right:min(640px,50vw)}
+.callpanel header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.callpanel header small{display:flex;gap:6px;align-items:center;color:var(--muted)}
+.cpctl{display:flex;flex-direction:column;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line)}.cpctl .chk small{color:var(--muted)}
+.cpcols{flex:1;display:grid;grid-template-columns:1.25fr 1fr;min-height:0}.cpcols h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.cptx{padding:12px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}.cplines{overflow:auto;flex:1}.cplines p{margin:0 0 8px;line-height:1.45}
+.cpfound{padding:12px 16px;overflow:auto;display:flex;flex-direction:column;gap:8px}.cpf{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px}.cpf small{display:block;color:var(--muted);font-size:12px}.tag.good{background:var(--green-soft);color:var(--accent)}
+.callpanel footer{padding:12px 16px;border-top:1px solid var(--line)}
+@media(max-width:1000px){#callpanel .callpanel{left:12px;width:auto}body.withcall #main{margin-right:0}.cpcols{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1128,7 +1139,7 @@ function card(l,{opts,num,queue,pairMode,serial}={}){
   <div class="who"><div class="namerow"><h3>${esc(owner?(l.name||'Owner name not stated'):(l.name||'Tenant name not stated'))}</h3><span class="tag ${isBroker(l)?'broker':owner?'owner':'tenant'}">${role}</span>${isGolden(l)?`<span class="tag goldtag">${icon('star')}Golden lead</span>`:''}${l.status==='closed'?`<span class="tag closedtag">${icon('archive')}${esc(leadClosureLabel(l))}</span>`:''}</div>
   <div class="place">${esc(l.society||(owner?'Society not stated':'Preferred area not stated'))}${l.unit?' · Flat '+esc(l.unit):''}</div>
   <div class="added">${esc(leadAddedStamp(l))}</div></div></div>`;
- const isSent=st==='ready';const stateHtml=`<div class="stcol">${isSent?`<button type="button" class="state ready chipbtn" data-act="gomatch" data-id="${id}" title="Open in Matches">${icon('circle-check')}${esc(stLabel)}${icon('chevron-right')}</button>`:`<span class="state ${st}">${st==='filled'?icon('circle-check'):st==='paused'?icon('pause'):''}${stLabel}</span>`}${sendAvail?`<button class="btn primary" data-act="send" data-id="${id}">${icon('send')}Send for matching</button>`:isSent?`<button class="btn" data-act="refreshmatch" data-id="${id}">${icon('refresh-cw')}Refresh matches</button>`:''}</div>`;
+ const isSent=st==='ready';const stateHtml=`<div class="stcol">${phone(l.phone)&&l.status!=='closed'?`<button class="btn callbtn" data-act="callwith" data-id="${id}">${icon('phone-call')}Call</button>`:''}${isSent?`<button type="button" class="state ready chipbtn" data-act="gomatch" data-id="${id}" title="Open in Matches">${icon('circle-check')}${esc(stLabel)}${icon('chevron-right')}</button>`:`<span class="state ${st}">${st==='filled'?icon('circle-check'):st==='paused'?icon('pause'):''}${stLabel}</span>`}${sendAvail?`<button class="btn primary" data-act="send" data-id="${id}">${icon('send')}Send for matching</button>`:isSent?`<button class="btn" data-act="refreshmatch" data-id="${id}">${icon('refresh-cw')}Refresh matches</button>`:''}</div>`;
  const ph=owner?(l.photoList||[]):[];
  const thumb=ph.length?`<button type="button" class="cthumb" data-act="tophotos" data-id="${id}" aria-label="See all ${ph.length} photo${ph.length>1?'s':''}"><img src="${esc(ph[0].url)}" alt="" loading="lazy">${ph.length>1?`<span class="cmore">${icon('images')}+${ph.length-1}</span>`:''}</button>`:'';
  const ess=essHtml(l);
@@ -1322,6 +1333,7 @@ function renderLayer(){
  }
  if(S.modal?.type==='callback')h+=callbackHtml();
  if(S.modal?.type==='flex')h+=flexHtml();
+ if(S.modal?.type==='callwith')h+=callWithHtml();
  if(S.modal?.type==='addhome')h+=addHomeHtml();
  if(S.modal?.type==='mremove')h+=removeHomeHtml();
  if(S.modal?.type==='deal')h+=dealHtml();
@@ -1521,6 +1533,14 @@ document.addEventListener('click',async e=>{
  if(act==='closemodal'){keepAdd();S.modal=null;renderLayer();return;}
  if(act==='fbmic'){fbStartStop();return;}
  if(act==='golead'){goLead(id);return;}
+ if(act==='callwith'){S.modal={type:'callwith',id};renderLayer();return;}
+ if(act==='callapp'){const ai=document.getElementById('callai')?.checked!==false;S.callAiOff=!ai;S.modal=null;renderLayer();openCallApp(l,b.dataset.app);markOpened?.(l.id);if(ai)openCallPanel(l.id);return;}
+ if(act==='callstart'){startListening();return;}
+ if(act==='callstop'){stopListening();return;}
+ if(act==='callclose'){stopListening();CALL.id=null;drawCallPanel();return;}
+ if(act==='callfill'){fillFromCall([b.dataset.k]);return;}
+ if(act==='callfillall'){fillFromCall(Object.keys(CALL.found));return;}
+ if(act==='callnotes'){const cl=S.byId.get(CALL.id);if(!cl)return;const d=draftOf(cl);const said=CALL.lines.join(' ');const picked=Object.values(CALL.found).map(f=>f.label+': '+f.show).join(' · ');d.discussion=[String(d.discussion||'').trim(),picked?'From the call: '+picked+'.':'',said].filter(Boolean).join('\n');renderCard(cl.id);queueSave(cl);document.getElementById('dn-'+cl.id)?.scrollIntoView({block:'center',behavior:'smooth'});toast('Added to today\'s call notes. Set the next follow-up to finish.');return;}
  if(act==='vdone'){const v=(S.visits||[]).find(x=>x.id===b.dataset.vid);if(!v)return;const c=prompt('Type the 4-digit visit code the tenant tells you after the visit.');if(c==null)return;if(String(c).trim()!==String(v.code)){toast('That code does not match. Ask the tenant for the code on their visit page.');return;}try{await fdb.doc('visits/'+v.id).update({done:true,status:'visited',doneAt:new Date().toISOString(),doneBy:String(FB.user?.email||'')});toast('Visit marked done.');}catch(e){toast('Could not save. Check your internet.');}return;}
  if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;const win=window.open('about:blank','_blank');let link;try{link=await makeShare(t,o);}catch(e){win?.close();toast('Could not make the link. Check your internet.');return;}const url=(to?'https://wa.me/'+to:'https://wa.me/')+'?text='+encodeURIComponent(homeShareText(o,link));if(win)win.location.href=url;else window.open(url,'_blank','noopener');
   const st=(t.shortlist||{})[o.id]||{};const now=new Date().toISOString();mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[o.id]:{...st,stage:stageIx(st.stage)>stageIx('shared')?st.stage:'shared',sharedAt:now,added:st.added||'auto'}}}),'Shared on WhatsApp',{pid:o.id});toast('WhatsApp opened with the home details and visit link.');return;}
@@ -1532,7 +1552,7 @@ document.addEventListener('click',async e=>{
  if(act==='fbsend'){fbSend();return;}
  if(act==='fbdropaudio'){if(FBV.audioUrl)URL.revokeObjectURL(FBV.audioUrl);FBV.audio=null;FBV.audioUrl='';fbRefresh();return;}
  if(act==='fbreply'){const fid=b.dataset.fid,v=(document.getElementById('fr-'+fid)?.value||'').trim();try{await fdb.doc('feedback/'+fid).update({reply:v,repliedAt:new Date().toISOString()});toast('Reply saved.');}catch(e){toast('Could not save the reply.');}return;}
- if(act==='teamadd'){const e=String(document.getElementById('teamemail').value||'').trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(e)){toast('Type a full email address.');return;}if((S.access||{})[e]){S.teamOpen=e;render(true);return;}try{await fdb.doc('access/'+e).set({email:e,limited:true,sheet:false,propAreas:[],tenAreas:[],noAreaProps:false,noAreaTenants:false,fee:0,addedBy:FB.user.email,addedAt:new Date().toISOString()});S.teamOpen=e;delete (S.teamDraft||{})[e];toast(e+' can now sign in. Pick what they see.');}catch(err){toast('Could not add. Only admins can invite.');}return;}
+ if(act==='teamadd'){const e=String(document.getElementById('teamemail').value||'').trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(e)){toast('Type a full email address.');return;}if(ADMINS.includes(e)){toast(e+' is an admin and always sees everything. Use a different email for a limited person.');return;}if((S.access||{})[e]){S.teamOpen=e;render(true);return;}try{await fdb.doc('access/'+e).set({email:e,limited:true,sheet:false,propAreas:[],tenAreas:[],noAreaProps:false,noAreaTenants:false,fee:0,addedBy:FB.user.email,addedAt:new Date().toISOString()});S.teamOpen=e;delete (S.teamDraft||{})[e];toast(e+' can now sign in. Pick what they see.');}catch(err){toast('Could not add. Only admins can invite.');}return;}
  if(act==='topen'){const e=b.dataset.email;S.teamOpen=S.teamOpen===e?null:e;delete (S.teamDraft||{})[e];render(true);return;}
  if(act==='tclose'){delete (S.teamDraft||{})[b.dataset.email];S.teamOpen=null;render(true);return;}
  if(act==='tarea'){const d=teamDraft(b.dataset.email),k=b.dataset.k,a=b.dataset.area;d[k]=d[k].includes(a)?d[k].filter(x=>x!==a):[...d[k],a];render(true);return;}
@@ -1799,8 +1819,82 @@ function teamPanel(){const list=Object.keys(S.access||{}).sort();const total=lis
   <div class="field money tfee"><label class="lab" for="tfee-${esc(e)}">${icon('indian-rupee')}Monthly price</label><div class="mrow"><span class="rs">₹</span><input id="tfee-${esc(e)}" inputmode="numeric" data-tfee="${esc(e)}" value="${d.fee?Number(d.fee).toLocaleString('en-IN'):''}" placeholder="0"><span class="unit">/ month</span></div></div>
   <div class="row"><button class="btn primary" data-act="tsave" data-email="${esc(e)}">${icon('check')}Save</button><button class="btn" data-act="tclose" data-email="${esc(e)}">Cancel</button><button class="btn link warn" data-act="teamdel" data-email="${esc(e)}">Remove access</button></div></div>`;};
  return `<section class="panel teampanel"><div class="dhead"><div><h2>Team access</h2><p class="place">Who can open the desk, which leads each person sees, and what they pay every month. Admins (info@ and Aman) always see everything.</p></div><div class="ttotal"><small>Monthly total</small><b>₹${total.toLocaleString('en-IN')}</b></div></div>
- <ul class="team">${list.map(e=>{const a=accOf(e),nm=(S.profiles||{})[e]?.name,open=S.teamOpen===e;return `<li class="tmem ${open?'open':''}"><div class="thead"><div><b>${esc(nm||e)}</b>${nm?`<small>${esc(e)}</small>`:''}<div class="tsum">${teamSummary(a)}</div></div><div class="tright"><span class="tfee">${a.fee?'₹'+Number(a.fee).toLocaleString('en-IN')+'/month':'No price set'}</span><button class="btn" data-act="topen" data-email="${esc(e)}">${open?'Close':'Edit access'}</button></div></div>${open?editor(e):''}</li>`;}).join('')||'<li class="place">No one invited yet.</li>'}</ul>
+ <ul class="team">${list.map(e=>{const a=accOf(e),nm=(S.profiles||{})[e]?.name,open=S.teamOpen===e;return `<li class="tmem ${open?'open':''}"><div class="thead"><div><b>${esc(nm||e)}</b>${nm?`<small>${esc(e)}</small>`:''}<div class="tsum">${ADMINS.includes(e)?'<span class="tag">Area limits do not apply to admins. To test limits, invite a different email.</span>':teamSummary(a)}</div></div><div class="tright">${ADMINS.includes(e)?'<span class="tag">Admin · always sees everything</span>':`<span class="tfee">${a.fee?'₹'+Number(a.fee).toLocaleString('en-IN')+'/month':'No price set'}</span><button class="btn" data-act="topen" data-email="${esc(e)}">${open?'Close':'Edit access'}</button>`}</div></div>${open&&!ADMINS.includes(e)?editor(e):''}</li>`;}).join('')||'<li class="place">No one invited yet.</li>'}</ul>
  <div class="row"><input id="teamemail" class="filter" type="email" placeholder="name@gmail.com" aria-label="Email to invite"><button class="btn primary" data-act="teamadd">${icon('user-plus')}Invite</button></div><p class="place">New people start with no leads. Pick their areas, then Save.</p></section>`;}
+/* ===== Call with AI listening =====
+   1) "Call" asks every time which app to use (WhatsApp app, WhatsApp Web, phone link, other).
+   2) The call panel hears the call: your microphone, plus (optionally) the other person's voice from the WhatsApp tab or screen audio.
+   3) Whisper (free, open-source, runs inside the browser; first use downloads the model once) writes what is said, live, in English.
+   4) Details it hears (budget, rooms, furnishing, move-in, areas…) appear beside the words, each with "Fill". Nothing is filled without a tap. */
+const CALLAPPS=[['wa','WhatsApp app','message-circle','Calls from the WhatsApp app on this laptop'],['waweb','WhatsApp Web','globe','Opens the chat in WhatsApp Web, then tap the call icon'],['tel','Phone (linked mobile)','smartphone','iPhone/Android linked to this laptop, e.g. FaceTime or Phone Link'],['other','Another calling app','phone-outgoing','Whatever app this laptop uses for phone links'],['copy','Just copy the number','copy','Dial from your own phone']];
+const CALL={id:null,on:false,streams:[],ctx:null,proc:null,buf:[],worker:null,ready:false,busy:false,lines:[],found:{},t0:0,timer:null,mode:'translate',other:false,lastApp:null};
+function callWithHtml(){const l=S.byId.get(S.modal.id);if(!l)return '';const ph=phone(l.phone);return `<div class="overlay"><section class="modal" role="dialog" aria-modal="true" aria-label="Call with" style="max-width:480px"><div class="mhead"><h2>Call ${esc(l.name||'')}</h2><button class="iconx" data-act="closemodal" aria-label="Close">${icon('x')}</button></div>
+ <p class="place nodict">${esc(ph||'No number')}</p><p class="lab">Which app do you want to call with?</p><div class="capps">${CALLAPPS.map(([k,n,ic,sub])=>`<button type="button" class="capp ${CALL.lastApp===k?'last':''}" data-act="callapp" data-id="${esc(l.id)}" data-app="${k}">${icon(ic)}<span><b>${n}</b><small>${sub}</small></span></button>`).join('')}</div>
+ <label class="chk"><input type="checkbox" id="callai" ${S.callAiOff?'':'checked'}>Open the AI listener while I talk</label><p class="place" style="font-size:13px">Tell the person their call is being noted.</p></section></div>`;}
+function openCallApp(l,app){const raw=String(phone(l.phone)||'').replace(/\D/g,'');const intl=raw.length===10?'91'+raw:raw;CALL.lastApp=app;
+ if(app==='wa')location.href='whatsapp://send?phone='+intl;
+ else if(app==='waweb')window.open('https://web.whatsapp.com/send?phone='+intl,'tk-whatsapp');
+ else if(app==='tel'||app==='other')location.href='tel:+'+intl;
+ else{navigator.clipboard?.writeText('+'+intl).then(()=>toast('Number copied.'),()=>toast('+'+intl));}}
+/* --- panel --- */
+function callPanelHtml(){if(!CALL.id)return '';const l=S.byId.get(CALL.id);if(!l)return '';const f=CALL.found;const keys=Object.keys(f);const secs=CALL.t0?Math.floor((Date.now()-CALL.t0)/1000):0;
+ return `<aside class="callpanel" aria-label="Call listener"><header><div><b class="nodict">${esc(l.name||'Call')}</b><small>${CALL.on?`<span class="recdot"></span> Listening · ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`:CALL.loading?esc(CALL.loading):'Not listening'}</small></div><button class="iconx" data-act="callclose" aria-label="Close listener">${icon('x')}</button></header>
+ <div class="cpctl">${CALL.on?`<button class="btn warn" data-act="callstop">${icon('square')}Stop listening</button>`:`<button class="btn primary" data-act="callstart">${icon('mic')}Start listening</button>`}
+ <label class="chk"><input type="checkbox" id="callother" ${CALL.other?'checked':''} ${CALL.on?'disabled':''}>Also hear the other person <small>(share the WhatsApp tab or screen, with audio)</small></label>
+ <label class="chk"><input type="checkbox" id="callorig" ${CALL.mode==='transcribe'?'checked':''} ${CALL.on?'disabled':''}>Write in the spoken language (default: English)</label></div>
+ <div class="cpcols"><section class="cptx"><h4>What was said</h4><div class="cplines" id="cplines">${CALL.lines.length?CALL.lines.map(x=>`<p class="nodict">${esc(x)}</p>`).join(''):'<p class="place">Words appear here a few seconds after they are spoken.</p>'}</div></section>
+ <section class="cpfound"><h4>Picked up from the call</h4>${keys.length?keys.map(k=>`<div class="cpf"><span><small>${esc(f[k].label)}</small><b class="nodict">${esc(f[k].show)}</b></span>${f[k].done?`<span class="tag good">Filled</span>`:`<button class="btn" data-act="callfill" data-k="${esc(k)}">Fill</button>`}</div>`).join('')+(keys.some(k=>!f[k].done)?`<button class="btn primary wide" data-act="callfillall">Fill all</button>`:''):'<p class="place">Budget, rooms, furnishing, move-in date, areas and more show here when they are mentioned.</p>'}</section></div>
+ <footer><button class="btn" data-act="callnotes" ${CALL.lines.length?'':'disabled'}>${icon('notebook-pen')}Put this in today's call notes</button></footer></aside>`;}
+function drawCallPanel(){let el=document.getElementById('callpanel');if(!CALL.id){el?.remove();document.body.classList.remove('withcall');return;}if(!el){el=document.createElement('div');el.id='callpanel';document.body.appendChild(el);}el.innerHTML=callPanelHtml();document.body.classList.add('withcall');fixIcons();const c=document.getElementById('cplines');if(c)c.scrollTop=c.scrollHeight;
+ const o=document.getElementById('callother');if(o)o.onchange=()=>{CALL.other=o.checked;};const g=document.getElementById('callorig');if(g)g.onchange=()=>{CALL.mode=g.checked?'transcribe':'translate';};}
+function openCallPanel(id){if(CALL.id&&CALL.id!==id)stopListening();CALL.id=id;CALL.lines=[];CALL.found={};drawCallPanel();}
+/* --- Whisper in a worker (transformers.js, free, on-device) --- */
+const WHISPER_SRC=`import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5';
+env.allowLocalModels=false;let asr=null;
+self.onmessage=async e=>{const m=e.data;
+ if(m.type==='load'){try{const gpu=!!(self.navigator&&navigator.gpu&&await navigator.gpu.requestAdapter());
+  asr=await pipeline('automatic-speech-recognition','onnx-community/whisper-base',{device:gpu?'webgpu':'wasm',dtype:gpu?{encoder_model:'fp32',decoder_model_merged:'q4'}:'q8',progress_callback:p=>{if(p.status==='progress')self.postMessage({type:'progress',file:p.file,pct:p.progress||0});}});
+  self.postMessage({type:'ready',gpu});}catch(err){self.postMessage({type:'error',msg:String(err&&err.message||err)});}return;}
+ if(m.type==='run'&&asr){try{const out=await asr(m.audio,{task:m.task,language:m.language||null,chunk_length_s:30});self.postMessage({type:'text',id:m.id,text:(out&&out.text||'').trim()});}catch(err){self.postMessage({type:'text',id:m.id,text:'',err:String(err)});}}};`;
+function whisper(){if(CALL.worker)return CALL.worker;const w=new Worker(URL.createObjectURL(new Blob([WHISPER_SRC],{type:'text/javascript'})),{type:'module'});CALL.worker=w;
+ w.onmessage=e=>{const m=e.data;if(m.type==='progress'){CALL.loading='Getting the AI ready (first time only)… '+Math.round(m.pct)+'%';throttleDraw();}
+  else if(m.type==='ready'){CALL.ready=true;CALL.loading='';drawCallPanel();}
+  else if(m.type==='error'){CALL.loading='The AI could not start: '+m.msg.slice(0,80);CALL.worker=null;drawCallPanel();}
+  else if(m.type==='text'){CALL.busy=false;const t=cleanHeard(m.text);if(t){CALL.lines.push(t);pickUp(t);}drawCallPanel();pump();}};
+ w.postMessage({type:'load'});CALL.loading='Getting the AI ready…';return w;}
+let _cpT;function throttleDraw(){clearTimeout(_cpT);_cpT=setTimeout(drawCallPanel,250);}
+function cleanHeard(t){t=String(t||'').replace(/\[[^\]]*\]|\([^)]*\)/g,'').replace(/\s+/g,' ').trim();if(!t||/^(thank you\.?|thanks for watching\.?|you\.?|\.+)$/i.test(t))return '';return t;}
+async function startListening(){const l=S.byId.get(CALL.id);if(!l)return;whisper();
+ try{const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});CALL.streams=[mic];}catch(e){toast('Allow the microphone to let the AI listen.');return;}
+ if(CALL.other){try{const scr=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true,systemAudio:'include',preferCurrentTab:false});if(!scr.getAudioTracks().length){toast('No sound was shared. Pick the WhatsApp tab and turn on "Share tab audio".');}scr.getVideoTracks().forEach(t=>t.stop());CALL.streams.push(scr);}catch(e){toast('Only your side will be heard.');}}
+ const ctx=new AudioContext({sampleRate:16000});CALL.ctx=ctx;const mix=ctx.createGain();for(const s of CALL.streams)if(s.getAudioTracks().length)ctx.createMediaStreamSource(s).connect(mix);
+ const proc=ctx.createScriptProcessor(4096,1,1);CALL.proc=proc;mix.connect(proc);proc.connect(ctx.destination);
+ CALL.buf=[];CALL.blen=0;proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);CALL.buf.push(new Float32Array(d));CALL.blen+=d.length;if(CALL.blen>=16000*6)cutChunk();};
+ CALL.on=true;CALL.t0=Date.now();CALL.timer=setInterval(()=>{if(CALL.on)throttleDraw();},1000);CALL.queue=[];drawCallPanel();}
+function cutChunk(){const a=new Float32Array(CALL.blen);let o=0;for(const b of CALL.buf){a.set(b,o);o+=b.length;}CALL.buf=[];CALL.blen=0;let s=0;for(let i=0;i<a.length;i+=8)s+=a[i]*a[i];const rms=Math.sqrt(s/(a.length/8));if(rms<0.006)return;CALL.queue.push(a);pump();}
+function pump(){if(CALL.busy||!CALL.ready||!CALL.queue?.length)return;CALL.busy=true;const a=CALL.queue.shift();CALL.worker.postMessage({type:'run',audio:a,task:CALL.mode,id:Date.now()},[a.buffer]);}
+function stopListening(){if(CALL.blen>16000)cutChunk();CALL.on=false;clearInterval(CALL.timer);try{CALL.proc&&(CALL.proc.onaudioprocess=null);CALL.ctx&&CALL.ctx.close();}catch(e){}for(const s of CALL.streams)s.getTracks().forEach(t=>t.stop());CALL.streams=[];CALL.ctx=null;CALL.proc=null;drawCallPanel();}
+/* --- pick details out of what was said (works on the English text) --- */
+const NUMW={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,fifteen:15,twenty:20,'twenty five':25,thirty:30,'thirty five':35,forty:40,'forty five':45,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+function amountIn(s){s=s.toLowerCase().replace(/,/g,'');for(const [w,n] of Object.entries(NUMW).sort((a,b)=>b[0].length-a[0].length))s=s.replace(new RegExp('\\b'+w+'\\b','g'),String(n));
+ let m=s.match(/(\d+(?:\.\d+)?)\s*(k|thousand|lakh|lac|l)\b/);if(m){const n=parseFloat(m[1]);return Math.round(n*(/^l/.test(m[2])?100000:1000));}
+ m=s.match(/\b(\d{4,6})\b/);if(m){const n=+m[1];if(n>=5000&&n<=500000)return n;}return null;}
+function pickUp(t){const l=S.byId.get(CALL.id);if(!l)return;const s=t.toLowerCase();const own=l.kind==='owner';const put=(k,val,label,show)=>{const prev=CALL.found[k];if(prev&&prev.val===val)return;CALL.found[k]={val,label,show:show||String(val),done:false};};
+ if(/budget|rent|afford|range|pay|month|per month|thousand|lakh|\bk\b/.test(s)){const a=amountIn(s);if(a)put('amountText',String(a),own?'Rent / month':'Budget / month','₹'+a.toLocaleString('en-IN'));}
+ let m=s.match(/\b(\d(?:\.5)?)\s*(?:bhk|b h k|bedroom|bed room)/)||s.match(/\b(one|two|three|four)\s*(?:bhk|b h k|bedroom)/);if(m){const n=NUMW[m[1]]||parseFloat(m[1]);const v=n>4?'4+ BHK':n+' BHK';put('requirement',v,'Rooms',v);}
+ if(/\b1\s*rk\b|one rk|single room kitchen/.test(s))put('requirement','1 RK','Rooms','1 RK');
+ if(/fully furnished|full furnished|fully-furnished/.test(s))put('furnishing','fully','Furnished','Full');else if(/semi[- ]?furnished|semi furnish/.test(s))put('furnishing','semi','Furnished','Semi');else if(/unfurnished|un-furnished|empty flat|bare/.test(s))put('furnishing','unfurnished','Furnished','Empty');
+ if(!own){if(/\bfamily|wife|husband|kids|children|parents\b/.test(s))put('tenantType','family','Tenant type','Family');else if(/bachelor|single (guy|man|boy)|friends|working (guys|boys)/.test(s))put('tenantType',/girl|ladies|female|women/.test(s)?'bachelor-female':'bachelor-male','Tenant type',/girl|ladies|female|women/.test(s)?'Bachelor female':'Bachelor male');else if(/company lease|company will pay|corporate/.test(s))put('tenantType','company','Tenant type','Company');
+  const mv=moveInFrom(s);if(mv)put('moveIn',mv,'Move-in date',shownDate(mv));
+  if(/still looking|yes.*looking|need (a|the) (flat|house|home)/.test(s))put('available',availOpts('tenant')[0][0],'Still looking?','Yes');}
+ if(/\bno pets?\b|don't (have|allow) pets?/.test(s))put('pets','no','Pets','No pets');else if(/\b(dog|cat|pet)\b/.test(s))put('pets','yes','Pets','Pets OK');
+ if(/\bveg only|pure veg|vegetarian only|only veg/.test(s))put('food','veg','Food','Veg only');
+ const hit=[];for(const k of Object.keys(AREA_MAP)){if(k.length>3&&s.includes(k.toLowerCase()))hit.push(k);}for(const t2 of allAreaNames())if(s.includes(t2.toLowerCase())&&!hit.some(h=>h.toLowerCase().includes(t2.toLowerCase())))hit.push(t2);
+ if(hit.length){const cur=String(draftOf(l).details.society||l.society||'');const add=hit.filter(h=>!cur.toLowerCase().includes(h.toLowerCase()));if(add.length)put('society',[cur,...add].filter(Boolean).join(', '),own?'Society':'Preferred societies / areas',add.join(', '));}}
+function allAreaNames(){if(S._an)return S._an;const set=new Set();for(const v of Object.values(AREA_MAP))areaTokens(v).forEach(t=>set.add(t));return S._an=[...set];}
+function moveInFrom(s){const d=new Date();const iso=x=>x.toISOString().slice(0,10);if(/immediately|right away|as soon as possible|asap|this week/.test(s))return iso(d);if(/next week/.test(s)){d.setDate(d.getDate()+7);return iso(d);}if(/next month/.test(s)){return iso(new Date(d.getFullYear(),d.getMonth()+1,1));}
+ const mo=['january','february','march','april','may','june','july','august','september','october','november','december'];for(let i=0;i<12;i++){const r=new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?'+mo[i]+'|'+mo[i]+'\\s+(\\d{1,2})|(?:by|from|in|start of|beginning of|end of)\\s+'+mo[i]);const m=s.match(r);if(m){const day=+(m[1]||m[2])||(/end of/.test(m[0])?28:1);let y=d.getFullYear();if(i<d.getMonth()||(i===d.getMonth()&&day<d.getDate()))y++;return iso(new Date(Date.UTC(y,i,day)));}}return null;}
+function fillFromCall(keys){const l=S.byId.get(CALL.id);if(!l)return;const d=draftOf(l);for(const k of keys){const f=CALL.found[k];if(!f||f.done)continue;d.details[k]=f.val;f.done=true;}renderCard(l.id);queueSave(l);drawCallPanel();toast('Filled from the call. Check the card.');}
 /* ===== Today's work: one list per person, in the order to do it ===== */
 function todayView(c){const nm=(S.profile?.name||'').split(' ')[0];const hr=+new Date().toLocaleString('en-IN',{hour:'numeric',hour12:false,timeZone:'Asia/Kolkata'});const hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
  const due=c.due.filter(l=>l.status!=='closed').sort((a,b)=>String(date(a.followup)).localeCompare(String(date(b.followup))));
