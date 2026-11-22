@@ -8,6 +8,11 @@ service cloud.firestore {
 
     // Team list: members can check it, only admins change it.
     match /access/{who} { allow read: if isMember(); allow write: if isAdmin(); }
+    // Profiles: each member reads and writes only their own; admins read all.
+    match /profiles/{who} {
+      allow read: if isAdmin() || (isMember() && who == email());
+      allow write: if isMember() && who == email() && request.resource.data.email == email();
+    }
     // Desk data
     match /leads/{id} { allow read, write: if isMember(); }
     match /config/{id} { allow read, write: if isMember(); }
