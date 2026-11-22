@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TrustKeyper · Home for rent</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<style>
+/* TK2 customer page look: same colours, card, facts list and next steps. */
+:root{--p:#3160FF;--pd:#1F4AD1;--ps:#EAF0FF;--pb:#DCE5F6;--ok:#146C3E;--oks:#E7F8EF;--bg:#fff;--mut:#F6F9FD;--bd:#DCE2E9;--h:#172231;--b:#2B3A4D;--m:#5E7087;--er:#B3261E;--ers:#FDECEA;--wa:#8A4500;--was:#FFF3E0}
+*{box-sizing:border-box}html,body{margin:0;background:#fff;color:var(--b);font:16px/1.45 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:0 20px 120px}
+header{position:sticky;top:0;z-index:5;background:#fff;display:flex;align-items:center;justify-content:center;height:56px;border-bottom:1px solid #EEF2F7}
+.brand{font-weight:800;font-size:20px;color:var(--h);letter-spacing:-.2px}.brand b{color:var(--p)}
+.back{position:absolute;left:8px;border:0;background:none;font-size:24px;width:44px;height:44px;border-radius:50%;cursor:pointer;color:var(--h)}
+h1{font-size:24px;line-height:1.25;color:var(--h);margin:18px 0 6px}h2{font-size:17px;color:var(--h);margin:0 0 12px}
+.gal{margin-top:16px;border-radius:18px;overflow:hidden;background:var(--mut);aspect-ratio:4/3;position:relative}
+.gal .strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100%;scrollbar-width:none}.gal .strip::-webkit-scrollbar{display:none}
+.gal img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:center}
+.gal .none{display:grid;place-items:center;height:100%;color:var(--m)}.gal .count{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;padding:3px 10px;border-radius:999px}
+.ticket{margin-top:18px;border-radius:18px;box-shadow:0 2px 10px rgba(23,34,49,.08);padding:16px}
+.rent{font-size:24px;font-weight:800;color:var(--h)}.rent small{font-size:15px;font-weight:500;color:var(--m)}
+.addr{color:var(--m);margin-top:2px}.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.pill{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--ps);color:var(--pd);font-weight:600}.pill.ok{background:var(--oks);color:var(--ok)}
+.facts{margin-top:12px;border-radius:18px;box-shadow:0 2px 10px rgba(23,34,49,.08)}
+.fact{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #EEF2F7}.fact:last-child{border-bottom:0}
+.fi{width:34px;height:34px;border-radius:10px;background:var(--mut);display:grid;place-items:center;font-size:16px;flex:none}.fl{color:var(--m);flex:1}.fv{color:var(--h);font-weight:600;text-align:right}
+.next{margin-top:22px;background:var(--mut);border-radius:18px;padding:16px}
+.step{display:flex;gap:12px;margin-bottom:10px}.step:last-child{margin-bottom:0}.dot{width:24px;height:24px;border-radius:50%;background:var(--ps);color:var(--pd);font-size:13px;font-weight:700;display:grid;place-items:center;flex:none}.dot.done{background:var(--ok);color:#fff}
+.step b{display:block;color:var(--h);font-weight:600}.step span{color:var(--m);font-size:14px}
+.broker{display:flex;gap:12px;align-items:center;margin-top:18px}.av{width:40px;height:40px;border-radius:50%;background:var(--mut);display:grid;place-items:center;font-weight:700;color:var(--pd)}.broker small{display:block;color:var(--m);font-size:13.5px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:8px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #EEF2F7}.bar .in{max-width:520px;margin:0 auto}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border-radius:14px;border:0;background:var(--p);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer;text-decoration:none}
+.btn:disabled{opacity:.6}.btn.sec{background:#fff;color:var(--pd);border:1.5px solid var(--bd)}.btn.ghost{background:none;color:var(--m);min-height:44px;font-weight:600}.btn.red{background:#fff;color:var(--er);border:1.5px solid #f1c4c0}
+.muted{color:var(--m)}.lab{font-weight:600;color:var(--h);margin:18px 0 8px;display:block}.lab.bad{color:var(--er)}
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.day{flex:none;width:68px;padding:10px 0;border-radius:14px;border:1.5px solid var(--bd);background:#fff;text-align:center;cursor:pointer;font:inherit}
+.day b{display:block;font-size:20px;color:var(--h)}.day small{color:var(--m);font-size:12.5px}.day.on{border-color:var(--p);background:var(--ps)}.day.on b{color:var(--pd)}.day:disabled{opacity:.4;cursor:default}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.time{padding:11px 0;border-radius:12px;border:1.5px solid var(--bd);background:#fff;font:inherit;font-weight:600;color:var(--h);cursor:pointer}.time.on{border-color:var(--p);background:var(--ps);color:var(--pd)}
+input.tx{width:100%;min-height:52px;border:1.5px solid var(--bd);border-radius:14px;padding:12px 14px;font:inherit;font-size:16px;color:var(--h)}input.tx:focus{outline:0;border-color:var(--p)}
+.err{background:var(--ers);color:var(--er);border-radius:12px;padding:10px 12px;margin-top:12px}
+.note{background:var(--mut);border-radius:14px;padding:12px 14px;margin-top:10px;display:flex;gap:10px}.note.warn{background:var(--was);color:var(--wa)}
+.code{font-size:44px;font-weight:800;letter-spacing:10px;color:var(--h);text-align:center;margin:6px 0 2px}
+.card{border:1px solid var(--bd);border-radius:18px;padding:16px;margin-top:16px}.row{display:flex;justify-content:space-between;gap:12px;padding:6px 0}.row span:first-child{color:var(--m)}.row span:last-child{color:var(--h);font-weight:600;text-align:right}
+.ok{display:inline-flex;align-items:center;gap:6px;background:var(--oks);color:var(--ok);font-weight:700;border-radius:999px;padding:6px 14px}
+.center{text-align:center}.gap{display:grid;gap:10px;margin-top:16px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;z-index:20}.sheet .in{background:#fff;width:100%;max-width:560px;margin:0 auto;border-radius:22px 22px 0 0;padding:22px 24px calc(18px + env(safe-area-inset-bottom))}
+.load{display:grid;place-items:center;min-height:60vh;color:var(--m)}
+</style>
+<script src="/__/firebase/10.14.1/firebase-app-compat.js"></script>
+<script src="/__/firebase/10.14.1/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js"></script>
+</head>
+<body>
+<header><button class="back" id="back" hidden aria-label="Back">‹</button><span class="brand">Trust<b>Keyper</b></span></header>
+<main class="wrap" id="app"><div class="load">Loading the home…</div></main>
+<div id="bar"></div>
+<script>
+/* Tenant page for a home shared from Rental Desk. Same journey and wording as TK2's tenant web
+   (tk2_customer.dart, tkweb_tenant.dart): page → book a visit → visit booked with a code → after the visit, did you like it. */
+const db=firebase.firestore();
+const sid=(location.pathname.split('/h/')[1]||'').replace(/[^A-Za-z0-9]/g,'');
+const app=document.getElementById('app'),bar=document.getElementById('bar'),backBtn=document.getElementById('back');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN');
+const S={share:null,visit:null,view:'page',day:null,at:null,tried:false,err:''};
+const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const L=()=>S.share.p;
+const dayName=d=>d.toLocaleDateString('en-IN',{weekday:'short'});
+const tk2Day=d=>d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+const tk2Time=d=>d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).replace(' ',' ').toLowerCase();
+function rentLine(l){if(!l.rent)return 'Rent on request';const r=money(l.rent);const line=l.mi||!l.m?r+' incl. maintenance':r+' + '+money(l.m)+' maintenance';return l.rn?line+' · negotiable':line;}
+const title=l=>[l.r,l.t].filter(Boolean).join(' · ');
+const feeText=l=>l.fee?money(l.fee):'Free';
+/* Visit windows the owner/broker gave (e.g. 10 am–1 pm, 4–8 pm). Customers book at least 1 hour ahead, on a 30-minute grid. */
+function windows(l){const w=(l.win&&l.win.length)?l.win:[[parseInt(l.vf,10)||7,parseInt(l.vt,10)||23]];return w;}
+function slots(day){const l=L(),now=Date.now()+3600e3,out=[];for(const [f,t] of windows(l)){for(let m=f*60;m<=t*60;m+=30){const d=new Date(day);d.setHours(0,m,0,0);if(d.getTime()>=now)out.push(d);}}return out;}
+const days=()=>{const a=[];const t=new Date();t.setHours(0,0,0,0);for(let i=0;i<7;i++){const d=new Date(t);d.setDate(t.getDate()+i);a.push(d);}return a;};
+const steps=[['Book a visit','Pick a day and time that suits you.'],['Visit the house','See it with the broker.'],['Pay a token to block it','Liked it? Once the token is paid, we stop showing the house to others.'],['Rent agreement is made','We draft it for you and the owner.'],['Sign the agreement','Online, from your phone.'],['Pay and collect the keys',"Security deposit, brokerage fee (if any) and 1 month's rent."]];
+function nextSteps(done){return `<section class="next"><h2>What happens next</h2>${steps.map(([a,b],i)=>`<div class="step"><span class="dot ${i<done?'done':''}">${i<done?'✓':i+1}</span><div><b>${a}</b><span>${b}</span></div></div>`).join('')}</section>`;}
+function facts(l){const rows=[['₹','Rent',rentLine(l)],...(l.d?[['🏦','Deposit',money(l.d)]]:[]),['🤝','Brokerage',l.bk||'Ask the broker'],['🎟️','Visit fee',feeText(l)],...(l.s?[['📐','Size',l.s+' sft']]:[]),['🛋️','Furnishing',l.f],...(l.tf?[['🏢','Floor',l.fl+' of '+l.tf]]:[]),...(l.fc?[['🧭','Facing',l.fc]]:[]),['👥','Who can rent',l.w||'Anyone'],['🐾','Pets',l.pt?'Allowed':'Not allowed'],['📅','Available',l.av||'Now']];
+ return `<section class="facts">${rows.map(([i,a,b])=>`<div class="fact"><span class="fi">${i}</span><span class="fl">${a}</span><span class="fv">${esc(b)}</span></div>`).join('')}</section>`;}
+function initials(n){return String(n||'T').split(/[\s·]+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+function setBar(html){bar.innerHTML=html?`<div class="bar"><div class="in">${html}</div></div>`:'';}
+function draw(){backBtn.hidden=S.view==='page'||S.view==='booked';const l=L();
+ if(S.view==='page'){const v=S.visit;
+  app.innerHTML=`<div class="gal">${(l.ph||[]).length?`<div class="strip">${l.ph.map(u=>`<img src="${esc(u)}" alt="Photo of the home" loading="lazy">`).join('')}</div><span class="count">${l.ph.length} photo${l.ph.length>1?'s':''}</span>`:'<div class="none">Photos on the visit</div>'}</div>
+  <section class="ticket"><div class="rent">${l.rent?money(l.rent):'Rent on request'}<small>${l.rent?' /month':''}</small></div><div class="addr">${esc(title(l))}</div>${l.a?`<div class="addr">📍 ${esc(l.a)}</div>`:''}<div class="pills">${l.rn?'<span class="pill">Rent negotiable</span>':''}<span class="pill ok">Visit ${esc(feeText(l))}</span></div></section>
+  ${facts(l)}${nextSteps(v&&v.status!=='cancelled'?(v.status==='visited'?2:1):0)}
+  ${l.bn?`<div class="broker"><span class="av">${esc(initials(l.bn))}</span><div><b>${esc(l.bn)}</b><small>Broker · shows you the house</small></div></div>`:''}
+  ${!v&&!S.share.not?`<button class="btn ghost" id="notme" style="margin-top:14px">Not for me</button>`:''}${S.share.not?'<p class="muted center">Thanks for telling us. We will ask the broker to show you other houses.</p>':''}`;
+  setBar(v&&v.status!=='cancelled'?`<button class="btn" id="go">See your visit</button>`:`<button class="btn" id="go">Book a visit · ${esc(feeText(l))}</button>`);
+  document.getElementById('go').onclick=()=>{S.view=v&&v.status!=='cancelled'?'booked':'book';S.err='';draw();scrollTo(0,0);};
+  const nm=document.getElementById('notme');if(nm)nm.onclick=notForMe;return;}
+ if(S.view==='book'){const ds=days();const sl=S.day?slots(S.day):[];const badDay=S.tried&&!S.day,badTime=S.tried&&S.day&&!S.at;const saved=store.get('tk.me')||{};
+  app.innerHTML=`<h1>Book a visit</h1><p class="muted">${esc(title(l))}</p>
+  <span class="lab ${badDay?'bad':''}">Pick a day</span><div class="days">${ds.map(d=>{const open=slots(d).length>0;const on=S.day&&+S.day===+d;return `<button class="day ${on?'on':''}" data-day="${+d}" ${open?'':'disabled'}><small>${dayName(d)}</small><b>${d.getDate()}</b><small>${d.toLocaleDateString('en-IN',{month:'short'})}</small></button>`;}).join('')}</div>
+  ${S.day?`<span class="lab ${badTime?'bad':''}">Pick a time between ${tk2Time(sl[0])} and ${tk2Time(sl[sl.length-1])}</span><div class="times">${sl.map(t=>`<button class="time ${S.at&&+S.at===+t?'on':''}" data-at="${+t}">${tk2Time(t)}</button>`).join('')}</div>`:''}
+  <span class="lab">Your name</span><input class="tx" id="nm" autocomplete="name" placeholder="Your name" value="${esc(saved.name||'')}">
+  <span class="lab">Your phone</span><input class="tx" id="ph" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10 digit phone number" value="${esc(saved.phone||'')}"><p class="muted" style="font-size:14px;margin:6px 2px">The broker calls you on this number.</p>
+  ${S.err?`<div class="err">${esc(S.err)}</div>`:''}`;
+  setBar(`<button class="btn" id="book">${l.fee?'Pay '+money(l.fee)+' and book':'Book visit'}</button>`);
+  app.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{keep();S.day=new Date(+b.dataset.day);S.at=null;draw();});
+  app.querySelectorAll('[data-at]').forEach(b=>b.onclick=()=>{keep();S.at=new Date(+b.dataset.at);draw();});
+  document.getElementById('book').onclick=book;return;}
+ if(S.view==='booked'){const v=S.visit,at=new Date(v.at);const past=Date.now()>at.getTime();const cancelled=v.status==='cancelled';
+  const cal='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('House visit · '+title(l))+'&dates='+[at,new Date(at.getTime()+3600e3)].map(d=>d.toISOString().replace(/[-:]|\.\d{3}/g,'')).join('/')+'&details='+encodeURIComponent('Visit code: '+v.code+'. Booked on TrustKeyper.')+'&location='+encodeURIComponent(l.a||'');
+  const maps='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(l.a||l.t||'Hyderabad');
+  let body='';
+  if(cancelled)body=`<p class="center"><span class="ok" style="background:var(--ers);color:var(--er)">Visit cancelled</span></p><div class="gap"><button class="btn" id="again">Book another time</button></div>`;
+  else if(v.liked)body=`<p class="center"><span class="ok">Thanks for telling us</span></p><p class="center muted">${v.liked==='yes'?'The broker will call you to block the house with a token, so no one else takes it.':'We will ask the broker to show you other houses.'}</p>`;
+  else if(past||v.status==='visited')body=`<section class="card"><h2>Did you like it?</h2><div class="gap"><button class="btn" data-like="yes">Yes, I like it</button><button class="btn sec" data-like="no">No, not for me</button></div></section>`;
+  else body=`<section class="card center"><p class="muted" style="margin:0">Your visit code</p><div class="code">${esc(v.code)}</div><p class="muted" style="margin:0">Tell this to the broker after you see the house.</p></section>
+   <div class="note">⏰<span>Please be on time. We wait 15 minutes.</span></div><div class="note">📞<span>The broker will call you before the visit.</span></div><div class="note">🛂<span>Gated society? The broker sends your gate pass on WhatsApp before the visit.</span></div>
+   <div class="gap"><a class="btn sec" href="${cal}" target="_blank" rel="noopener">Add to Google Calendar</a><a class="btn sec" href="${maps}" target="_blank" rel="noopener">Open in Google Maps</a><button class="btn ghost" id="visited">I visited the place</button><button class="btn red" id="cancel">Cancel visit</button></div>`;
+  app.innerHTML=`${cancelled||v.liked?'':`<p class="center" style="margin-top:22px"><span class="ok">✓ ${v.status==='visited'?'Visit done':'Visit booked'}</span></p>`}<h1 class="center">${tk2Day(at)}, ${tk2Time(at)}</h1><p class="center muted">${esc(title(l))}</p>
+  <section class="card"><div class="row"><span>Visit</span><span>${tk2Day(at)}, ${tk2Time(at)}</span></div><div class="row"><span>Property</span><span>${esc(l.t)}</span></div><div class="row"><span>Visit fee</span><span>${esc(feeText(l))}</span></div>${l.bn?`<div class="row"><span>Your broker</span><span>${esc(l.bn)}${l.bp?' · <a href="tel:'+esc(l.bp)+'">'+esc(l.bp)+'</a>':''}</span></div>`:''}</section>${body}${nextSteps(v.status==='visited'||v.liked?2:cancelled?0:1)}`;
+  setBar('');
+  const c=document.getElementById('cancel');if(c)c.onclick=()=>confirmSheet('Cancel this visit?','The broker is told straight away.','Cancel visit','Keep visit',()=>upd({status:'cancelled'}));
+  const vi=document.getElementById('visited');if(vi)vi.onclick=()=>upd({status:'visited'});
+  const ag=document.getElementById('again');if(ag)ag.onclick=()=>{S.visit=null;store.set('tk.v.'+sid,null);S.day=null;S.at=null;S.view='book';draw();};
+  app.querySelectorAll('[data-like]').forEach(b=>b.onclick=()=>upd({liked:b.dataset.like,status:'visited'}));}}
+function keep(){const n=document.getElementById('nm'),p=document.getElementById('ph');if(n&&p)store.set('tk.me',{name:n.value,phone:p.value});}
+async function book(){keep();const l=L();const name=(document.getElementById('nm').value||'').trim(),digits=(document.getElementById('ph').value||'').replace(/\D/g,'').replace(/^(91|0)(?=\d{10}$)/,'');
+ if(!S.day||!S.at){S.tried=true;S.err='';draw();return;}if(S.at.getTime()<Date.now()+3600e3){S.err='Pick a time at least 1 hour from now.';S.at=null;draw();return;}
+ if(name.length<2){S.err='Type your name';draw();return;}if(digits.length!==10){S.err='Type your 10 digit phone number';draw();return;}
+ const btn=document.getElementById('book');btn.disabled=true;btn.textContent='Booking…';
+ const ref=db.collection('visits').doc();const code=String(1000+Math.floor(Math.random()*9000));
+ const v={sid,tid:S.share.tid,pid:S.share.pid,at:S.at.toISOString(),name:name.slice(0,80),phone:'+91 '+digits,code,status:'booked',createdAt:new Date().toISOString()};
+ try{await ref.set(v);S.visit={id:ref.id,...v};store.set('tk.v.'+sid,{id:ref.id});S.view='booked';draw();scrollTo(0,0);}
+ catch(e){S.err='We could not book this visit. Check your internet and try again.';draw();}}
+async function upd(patch){try{await db.collection('visits').doc(S.visit.id).update({...patch,updatedAt:new Date().toISOString()});Object.assign(S.visit,patch);draw();scrollTo(0,0);}catch(e){alertBox('Could not save. Check your internet and try again.');}}
+async function notForMe(){try{await db.collection('replies').add({sid,tid:S.share.tid,pid:S.share.pid,kind:'notforme',at:new Date().toISOString()});}catch(e){}S.share.not=true;store.set('tk.n.'+sid,1);draw();}
+function confirmSheet(t,sub,yes,no,fn){const d=document.createElement('div');d.className='sheet';d.innerHTML=`<div class="in"><h2 style="font-size:22px">${t}</h2><p class="muted">${sub}</p><div class="gap"><button class="btn red" data-y>${yes}</button><button class="btn sec" data-n>${no}</button></div></div>`;document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.hasAttribute('data-n'))d.remove();if(e.target.hasAttribute('data-y')){d.remove();fn();}};}
+function alertBox(t){confirmSheet(t,'','OK','Close',()=>{});}
+backBtn.onclick=()=>{S.view='page';draw();scrollTo(0,0);};
+(async()=>{if(!sid){app.innerHTML='<div class="load">This link is not complete. Ask your broker to send it again.</div>';return;}
+ try{const d=await db.collection('shares').doc(sid).get();if(!d.exists||d.data().off){app.innerHTML='<div class="load">This property is no longer listed.</div>';return;}
+  S.share=d.data();S.share.not=!!store.get('tk.n.'+sid);document.title='TrustKeyper · '+title(L());
+  const mine=store.get('tk.v.'+sid);if(mine&&mine.id){try{const v=await db.collection('visits').doc(mine.id).get();if(v.exists)S.visit={id:v.id,...v.data()};}catch(e){}}
+  draw();}catch(e){app.innerHTML='<div class="load">Could not open this home. Check your internet and try again.</div>';}})();
+</script>
+</body>
+</html>

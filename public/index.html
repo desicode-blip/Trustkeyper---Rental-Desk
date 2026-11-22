@@ -523,6 +523,7 @@ details.fold>summary{cursor:pointer;font-weight:700;color:var(--accent);padding:
 .pfmeta{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:14px 0}.pfmeta dt{color:var(--muted)}.pfmeta dd{margin:0}
 .btn.wa{background:#e7f7ee;border-color:#b5e2c7;color:#137a43}.btn.wa:hover{background:#d6f1e2}
 .tamic{position:absolute;right:86px;bottom:10px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.tamic svg{width:14px;height:14px}.tamic.live{border-color:#c0392b;color:#c0392b;background:#fdeeee}.recdot{width:8px;height:8px;border-radius:50%;background:#c0392b;animation:pin 1s infinite alternate}
+.vline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 0;padding:8px 10px;border-radius:10px;background:var(--green-soft);font-size:13.5px}.vline svg{width:15px;height:15px;color:var(--accent)}.vline.off{background:var(--line);color:var(--muted)}.vline .good{color:var(--accent)}.vline .btn.link{margin-left:auto;padding:0 4px}
 </style>
 </head>
 <body>
@@ -1166,7 +1167,7 @@ function homeRow(t,r){const o=r.o,tid=esc(t.id),pid=esc(o.id),st=r.st.stage||'su
  <span class="p">${esc(o.requirement||'Home type to confirm')} · ${esc(propertyRentLabel(o))}${o.locality?' · '+esc(o.locality):''}</span><span>${esc(o.name||'Owner')} · <b>${esc(prepare(o).phone||'No phone')}</b>${isBroker(o)?' · Broker':''}</span>
  ${r.m&&r.m.reasons.length?`<span class="reasons">${esc(r.m.reasons.join(' · '))}</span>`:''}${r.m&&r.m.checks.length?`<span class="hmcheck">${icon('alert-circle')}Check: ${esc(r.m.checks.join(' · '))}</span>`:(!r.m&&!gone?`<span class="hmcheck">${icon('alert-circle')}Not an automatic match. Check it fits the tenant.</span>`:'')}
  <div class="hmrow"><label class="sr" for="ms-${tid}-${pid}">Stage</label><select id="ms-${tid}-${pid}" class="mstage" data-mstage="1" data-t="${tid}" data-p="${pid}" ${gone?'disabled':''}>${MSTAGES.map(([v,x])=>`<option value="${v}" ${v===st?'selected':''}>${x}</option>`).join('')}</select>${st==='visit'||st==='visited'?`<label class="mvis">${icon('calendar')}<input type="datetime-local" data-mvisit="1" data-t="${tid}" data-p="${pid}" value="${esc(r.st.visitAt||'')}" aria-label="Visit date and time"></label>`:''}</div>
- ${last?`<p class="hmlast"><time>${mstamp(last.at)}</time> ${esc(last.text)}</p>`:''}
+ ${visitLine(t,o)}${last?`<p class="hmlast"><time>${mstamp(last.at)}</time> ${esc(last.text)}</p>`:''}
  <div class="row hmact">${st==='chosen'&&!gone?`<button class="btn primary" data-act="mdeal" data-id="${tid}" data-pid="${pid}">${icon('badge-check')}Deal done</button>`:''}${gone?'':`<button class="btn wa" data-act="mshare" data-id="${tid}" data-pid="${pid}">${icon('send')}Share on WhatsApp</button>`}<button class="btn link" data-act="pitch" data-id="${tid}" data-pid="${pid}">${icon('message-circle')}Pitch</button><button class="btn link" data-act="mnote" data-id="${tid}" data-pid="${pid}">${icon('notebook-pen')}Add note</button><button class="btn link warn" data-act="mremove" data-id="${tid}" data-pid="${pid}">${icon('x')}Remove</button></div></div>`;}
 function dealPanel(t,opts){const rows=homeRows(t,opts),all=S.showAll?.[t.id],keep=rows.filter(r=>r.manual||stageIx(r.st.stage)>0),rest=rows.filter(r=>!(r.manual||stageIx(r.st.stage)>0));const vis=[...keep,...(all?rest:rest.slice(0,Math.max(0,4-keep.length)))];const more=rows.length-vis.length;const hid=Object.entries(t.hiddenHomes||{});const tid=esc(t.id);
  return `<aside class="opts deal"><div class="dhead"><h4>Homes for ${esc(t.name||'this tenant')} <b class="cnt">${rows.length}</b></h4><button class="btn" data-act="madd" data-id="${tid}">${icon('plus')}Add a home</button></div>
@@ -1511,8 +1512,9 @@ document.addEventListener('click',async e=>{
  if(act==='closemodal'){keepAdd();S.modal=null;renderLayer();return;}
  if(act==='fbmic'){fbStartStop();return;}
  if(act==='golead'){goLead(id);return;}
- if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;const url=(to?'https://wa.me/'+to:'https://wa.me/')+'?text='+encodeURIComponent(tk2ShareText(o));window.open(url,'_blank','noopener');
-  const st=(t.shortlist||{})[o.id]||{};const now=new Date().toISOString();mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[o.id]:{...st,stage:stageIx(st.stage)>stageIx('shared')?st.stage:'shared',sharedAt:now,added:st.added||'auto'}}}),'Shared on WhatsApp with the TK2 link',{pid:o.id});toast('WhatsApp opened with the home details and visit link.');return;}
+ if(act==='vdone'){const v=(S.visits||[]).find(x=>x.id===b.dataset.vid);if(!v)return;const c=prompt('Type the 4-digit visit code the tenant tells you after the visit.');if(c==null)return;if(String(c).trim()!==String(v.code)){toast('That code does not match. Ask the tenant for the code on their visit page.');return;}try{await fdb.doc('visits/'+v.id).update({done:true,status:'visited',doneAt:new Date().toISOString(),doneBy:String(FB.user?.email||'')});toast('Visit marked done.');}catch(e){toast('Could not save. Check your internet.');}return;}
+ if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;const win=window.open('about:blank','_blank');let link;try{link=await makeShare(t,o);}catch(e){win?.close();toast('Could not make the link. Check your internet.');return;}const url=(to?'https://wa.me/'+to:'https://wa.me/')+'?text='+encodeURIComponent(homeShareText(o,link));if(win)win.location.href=url;else window.open(url,'_blank','noopener');
+  const st=(t.shortlist||{})[o.id]||{};const now=new Date().toISOString();mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[o.id]:{...st,stage:stageIx(st.stage)>stageIx('shared')?st.stage:'shared',sharedAt:now,added:st.added||'auto'}}}),'Shared on WhatsApp',{pid:o.id});toast('WhatsApp opened with the home details and visit link.');return;}
  if(act==='twmore'){S.twAll=S.twAll||{};S.twAll[b.dataset.k]=!S.twAll[b.dataset.k];render(true);return;}
  if(act==='pflang'){if(await saveProfile({lang:b.dataset.lang})){location.reload();}return;}
  if(act==='pfsave'){const nm=(document.getElementById('pfname')?.value||'').trim(),ph=(document.getElementById('pfphone')?.value||'').trim();if(!nm){toast('Type your name.');return;}if(await saveProfile({name:nm,phone:ph}))toast('Saved.');render(true);return;}
@@ -1729,20 +1731,42 @@ function tk2Base32(text){const abc='abcdefghijklmnopqrstuvwxyz234567';let out=''
 function tk2Payload(o){const pp=prepare(o),d=leadDetails(o);const num=x=>{const n=money(x);return n==null?0:Math.round(n);};const furn=pp.furnishing==='fully'?'Fully furnished':pp.furnishing==='semi'?'Semi-furnished':'Unfurnished';
  const mm=o.maintenanceMode||d.maintenanceMode||'';const area=o.locality||areaFor(o.society)||'';const photos=(o.photoList||[]).map(x=>x&&x.url).filter(u=>/^https:/.test(u||'')).slice(0,10);
  const me=S.profile||{};const who=String(d.whoCanRent||'').split(',').map(s=>s.trim()).filter(Boolean);
- return {id:'rd-'+String(o.id).slice(-10),t:(o.society||area||'Home in Hyderabad').trim(),a:[o.society,area].filter(Boolean).join(', '),r:pp.beds?(pp.beds===0.5?'1 RK':pp.beds+' BHK'):(o.requirement||''),rent:pp.amount||0,mi:mm==='extra'?0:1,...(o.rentNegotiable==='yes'?{rn:1}:{}),m:mm==='extra'?num(o.maintenanceText):0,d:num(o.deposit),b:0,bd:0,f:furn,...(num(o.area)?{s:num(o.area)}:{}),fl:parseInt(o.floor,10)||0,tf:parseInt(o.totalFloors,10)||0,...(o.facing?{fc:o.facing}:{}),w:who.length&&!who.includes('anyone')?who.join(', '):'Anyone',pt:pp.pets==='no'?0:1,av:date(o.availableFrom)?shownDate(o.availableFrom):(o.availableFrom||''),vd:'all',vf:'10:00',vt:'19:00',fee:0,...(photos.length?{ph:photos}:{}),bn:'TrustKeyper'+(me.name?' · '+me.name:''),...(me.phone?{bp:me.phone}:{})};}
+ return {id:'rd-'+String(o.id).slice(-10),t:(o.society||area||'Home in Hyderabad').trim(),a:[o.society,area].filter(Boolean).join(', '),r:pp.beds?(pp.beds===0.5?'1 RK':pp.beds+' BHK'):(o.requirement||''),rent:pp.amount||0,mi:mm==='extra'?0:1,...(o.rentNegotiable==='yes'?{rn:1}:{}),m:mm==='extra'?num(o.maintenanceText):0,d:num(o.deposit),b:0,bd:0,f:furn,...(num(o.area)?{s:num(o.area)}:{}),fl:parseInt(o.floor,10)||0,tf:parseInt(o.totalFloors,10)||0,...(o.facing?{fc:o.facing}:{}),w:who.length&&!who.includes('anyone')?who.join(', '):'Anyone',pt:pp.pets==='no'?0:1,av:date(o.availableFrom)?shownDate(o.availableFrom):(o.availableFrom||''),vd:'all',vf:7,vt:23,fee:0,...(photos.length?{ph:photos}:{}),bn:'TrustKeyper'+(me.name?' · '+me.name:''),...(me.phone?{bp:me.phone}:{})};}
 function tk2Link(o){return TK2_WEB+'#p-'+tk2Base32(JSON.stringify(tk2Payload(o)));}
+const HOME_WEB=location.origin+'/h/';
+function visitWindows(o){const to24=(h,a)=>{h=+h;if(!h&&h!==0)return null;if(a==='PM'&&h<12)h+=12;if(a==='AM'&&h===12)h=0;return h;};return vtParse(o.visitTimes).map(s=>[to24(s.f,s.fa),to24(s.t,s.ta)]).filter(([a,b])=>a!=null&&b!=null&&b>a);}
+async function makeShare(t,o){const sid=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>'abcdefghijkmnpqrstuvwxyz23456789'[b%32]).join('');const p=tk2Payload(o);const win=visitWindows(o);if(win.length)p.win=win;const bk=brokerageValue(t);if(bk)p.bk=bk;
+ await fdb.doc('shares/'+sid).set({tid:t.id,pid:o.id,p,by:String(FB.user?.email||''),at:new Date().toISOString()});return HOME_WEB+sid;}
+function homeShareText(o,link){return tk2ShareText(o).replace(/https:\/\/trustkeyper-tk2-staging\.web\.app\/#p-[a-z2-7]+/,link);}
 function tk2ShareText(o){const pp=prepare(o),pl=tk2Payload(o);const facts=[pl.r,pl.f,pl.s?pl.s+' sft':''].filter(Boolean).join(' · ');const rs=x=>'₹'+Number(x).toLocaleString('en-IN');
  return ['🏠 '+pl.t,(o.locality||areaFor(o.society))?'📍 '+(o.locality||areaFor(o.society)):'',facts,pl.rent?'Rent '+rs(pl.rent)+(pl.mi?'':' + '+rs(pl.m)+' maintenance')+(pl.rn?' (negotiable)':'')+(pl.d?' · Deposit '+rs(pl.d):''):'',pl.w&&pl.w!=='Anyone'?'For '+pl.w:'',pl.pt?'':'No pets','Available '+(pl.av?'from '+pl.av:'now'),'','See photos and book a visit (free):',tk2Link(o),'','– '+pl.bn+(pl.bp?', '+pl.bp:'')].filter((x,i,a)=>x!==''||(a[i-1]!=='')).join('\n');}
+
+/* ===== Tenant link activity → match workspace. Each visit/reply is written once into the tenant's homes (stage + log). ===== */
+const VSTAT={booked:'Visit booked',cancelled:'Visit cancelled by tenant',visited:'Tenant says they visited'};
+function visitsFor(tid,pid){return (S.visits||[]).filter(v=>v.tid===tid&&(!pid||v.pid===pid)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));}
+async function foldVisits(){if(!S.loaded||S.folding)return;S.folding=true;try{
+ for(const v of S.visits||[]){const key=[v.status,v.liked||'',v.done?'d':''].join('|');if(v.seen===key)continue;const t=S.byId.get(v.tid),o=S.byId.get(v.pid);if(!t){continue;}
+  const st=(t.shortlist||{})[v.pid]||{};const stage=v.liked==='yes'?'interested':v.status==='visited'||v.done?'visited':v.status==='booked'?'visit':st.stage||'shared';
+  const txt=v.liked?(v.liked==='yes'?'Tenant liked '+homeName(o||{})+' after the visit':'Tenant says '+homeName(o||{})+' is not for them'):VSTAT[v.status]+(v.status==='booked'?' for '+new Date(v.at).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'');
+  const keepStage=stageIx(st.stage)>stageIx(stage)&&!(v.liked==='no');
+  await mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[v.pid]:{...st,added:st.added||'auto',stage:keepStage?st.stage:stage,...(v.status==='booked'?{visitAt:String(v.at).slice(0,16)}:{}),...(v.liked?{liked:v.liked}:{})}}}),txt,{pid:v.pid,vid:v.id});
+  try{await fdb.doc('visits/'+v.id).update({seen:key});}catch(e){}}
+ for(const r of S.replies||[]){if(r.seen)continue;const t=S.byId.get(r.tid),o=S.byId.get(r.pid);if(!t)continue;await mWrite(t.id,x=>({}),'Tenant tapped "Not for me" on '+homeName(o||{}),{pid:r.pid});try{await fdb.doc('replies/'+r.id).update({seen:true});}catch(e){}}
+}finally{S.folding=false;}}
+function visitLine(t,o){const v=visitsFor(t.id,o.id)[0];if(!v)return '';const at=new Date(v.at);const when=at.toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});const id=esc(v.id);
+ if(v.status==='cancelled')return `<p class="vline off">${icon('calendar-x')}Visit on ${when} was cancelled by the tenant</p>`;
+ return `<p class="vline">${icon('calendar-check')}<span><b>Visit ${v.done?'done':'booked'}</b> · ${when} · <span class="nodict">${esc(v.name)}</span>${v.liked?` · ${v.liked==='yes'?'<b class="good">Liked it</b>':'Not for them'}`:''}</span>${!v.done?`<button class="btn link" data-act="vdone" data-id="${esc(t.id)}" data-vid="${id}">Mark visit done</button>`:''}</p>`;}
 /* ===== Today's work: one list per person, in the order to do it ===== */
 function todayView(c){const nm=(S.profile?.name||'').split(' ')[0];const hr=+new Date().toLocaleString('en-IN',{hour:'numeric',hour12:false,timeZone:'Asia/Kolkata'});const hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
  const due=c.due.filter(l=>l.status!=='closed').sort((a,b)=>String(date(a.followup)).localeCompare(String(date(b.followup))));
  const dueIds=new Set(due.map(l=>l.id));
  const fresh=c.callable.filter(l=>!dueIds.has(l.id)&&!everCalled(l)&&phone(l.phone)).sort(newest).slice(0,40);
  const mt=c.withMatches.filter(t=>!t.matchCompleted&&!dueIds.has(t.id));
+ const vis=(S.visits||[]).filter(v=>v.status==='booked'&&!v.done&&new Date(v.at).getTime()>Date.now()-6*3600e3).sort((a,b)=>String(a.at).localeCompare(String(b.at)));
  const row=(l,why,extra)=>`<li class="twrow"><div class="twmain"><b class="nodict">${esc(l.name||'No name')}</b><span class="tag">${l.kind==='owner'?'Property':isBroker(l)?'Broker':'Tenant'}</span><small class="nodict">${esc(why)}</small></div><div class="twact">${phone(l.phone)?`<a class="btn" href="tel:${esc(phone(l.phone))}">${icon('phone')}${tr('Call')}</a>`:''}<button class="btn primary" data-act="golead" data-id="${esc(l.id)}">${tr('Open')}${icon('chevron-right')}</button></div>${extra||''}</li>`;
  const sec=(title,ic,list,fn,empty)=>`<section class="twsec"><h2>${icon(ic)}${title}<b class="cnt">${list.length}</b></h2>${list.length?`<ol class="twlist">${list.slice(0,S.twAll?.[title]?500:12).map(fn).join('')}</ol>${list.length>12?`<button class="btn link" data-act="twmore" data-k="${esc(title)}">${S.twAll?.[title]?'Show fewer':'Show all '+list.length}</button>`:''}`:`<p class="place">${empty}</p>`}</section>`;
  return `<div class="head"><div><h1>${hi}${nm?', <span class="nodict">'+esc(nm)+'</span>':''}</h1><p class="sub">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})} · ${due.length+fresh.length+mt.length} things to do</p></div></div>
- <div class="twgrid">${sec(tr('Calls due'),'calendar-clock',due,l=>row(l,(date(l.followup)<today()?'Overdue since '+shownDate(l.followup):'Due today')+(l.followupNote?' · '+l.followupNote:'')),tr('Nothing due. Nice work.'))}
+ <div class="twgrid">${vis.length?sec('Visits booked','calendar-check',vis,v=>{const t=S.byId.get(v.tid),o=S.byId.get(v.pid);return t?row(t,new Date(v.at).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})+' · '+homeName(o||{})+' · call them before the visit'):'';},''):''}${sec(tr('Calls due'),'calendar-clock',due,l=>row(l,(date(l.followup)<today()?'Overdue since '+shownDate(l.followup):'Due today')+(l.followupNote?' · '+l.followupNote:'')),tr('Nothing due. Nice work.'))}
  ${sec(tr('New matches'),'sparkles',mt,t=>{const n=c.pairs.get(t.id)?.length||0;return row(t,n+' home'+(n>1?'s':'')+' fit · '+(t.society||''));},'No new matches yet. They appear here as soon as a home fits a tenant.')}
  ${sec(tr('New leads to call'),'user-plus',fresh,l=>row(l,'Added '+shownDate(String(l.addedAt||l.discoveredAt||l.added||'').slice(0,10))+(l.society?' · '+l.society:'')),'No new leads waiting.')}</div>`;}
 function goLead(id){const l=S.byId.get(id);if(!l)return;S.view=isBroker(l)?'brokers':l.kind==='owner'?'properties':'tenants';S.tab='all';S.onlyClosed=l.status==='closed';S.query=phone(l.phone)||l.name||'';S.source='all';S.contact='all';location.hash=S.view;render(true);setTimeout(()=>{const el=document.querySelector(`#main [data-card="${CSS.escape(id)}"]`);el?.scrollIntoView({block:'start'});window.scrollBy(0,-12);},60);}
@@ -1861,11 +1885,13 @@ render(true);
 (async()=>{
  const conn=document.getElementById('conn'),dot=document.getElementById('dot');
  const db=await claude.use('db');
- if(!db){conn.textContent='Not signed in';dot.classList.add('warn');S.loaded=true;maybeAutoSync();render(true);document.getElementById('main').innerHTML='<div class="empty"><h3>The desk cannot reach its records here</h3><p>Sign in with an invited Google account.</p></div>';return;}
+ if(!db){conn.textContent='Not signed in';dot.classList.add('warn');S.loaded=true;setTimeout(()=>foldVisits(),500);maybeAutoSync();render(true);document.getElementById('main').innerHTML='<div class="empty"><h3>The desk cannot reach its records here</h3><p>Sign in with an invited Google account.</p></div>';return;}
  S.db=db;
  const timer=setTimeout(()=>{conn.textContent='Records not reachable yet';dot.classList.add('warn');},10000);
  db.doc('config/sheetSync').onSnapshot(s=>{S.sheetSync=s.exists?s.data():null;S.syncInfoLoaded=true;maybeAutoSync();},()=>{});
  {const me=(FB.user?.email||firebase.auth().currentUser?.email||'').toLowerCase();const qs=FB.admin?[fdb.collection('feedback')]:[fdb.collection('feedback').where('by','==',me),fdb.collection('feedback').where('shared','==',true)];const parts=qs.map(()=>[]);qs.forEach((q,i)=>q.onSnapshot(s=>{parts[i]=s.docs.map(d=>d.data());const m=new Map();parts.flat().forEach(f=>m.set(f.id,f));S.feedback=[...m.values()];if(S.view==='helpers'&&!document.activeElement?.closest?.('.fb')&&!FBV.listening)fbRefresh();},()=>{}));}
+ fdb.collection('visits').onSnapshot(s=>{S.visits=s.docs.map(d=>({id:d.id,...d.data()}));foldVisits();if(S.loaded)render();},()=>{});
+ fdb.collection('replies').onSnapshot(s=>{S.replies=s.docs.map(d=>({id:d.id,...d.data()}));foldVisits();if(S.loaded)render();},()=>{});
  if(FB.admin)fdb.collection('access').onSnapshot(s=>{S.team=s.docs.map(d=>d.id).sort();if(S.view==='helpers')render();},()=>{});
  db.doc('config/societyAreas').onSnapshot(s=>{S.societyAreas=s.exists?s.data():{};},()=>{});
  db.doc('config/online').onSnapshot({includeMetadataChanges:true},s=>{if(!s.metadata.fromCache){clearTimeout(timer);conn.textContent='Saved online';dot.classList.remove('warn');}},()=>{});
@@ -1876,7 +1902,7 @@ render(true);
   S.leads=snap.docs.map(d=>d.data()).filter(x=>x&&x.id);
   S.byId=new Map(S.leads.map(l=>[l.id,l]));
   for(const id of Object.keys(S.drafts)){const l=S.byId.get(id);if(l&&!anyChange(l)&&!SAVE.pending.has(id))delete S.drafts[id];}
-  S.loaded=true;maybeAutoSync();
+  S.loaded=true;setTimeout(()=>foldVisits(),500);maybeAutoSync();
   if(!first&&chg.length&&chg.length<=8&&chg.every(c=>c.type==='modified')&&S.view!=='helpers'&&sameCards()){renderNav();chg.forEach(c=>{const id=c.doc.id,el=document.querySelector(`[data-card="${CSS.escape(id)}"]`);if(!el||el.classList.contains('pair'))return;if(el.contains(document.activeElement))return;if(c.doc.metadata.hasPendingWrites&&!S.photoBusy?.[id])return;renderCard(id);});}
   else render();
   repairImportStamps();

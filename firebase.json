@@ -23,6 +23,12 @@
           }
         ]
       }
+    ],
+    "rewrites": [
+      {
+        "source": "/h/**",
+        "destination": "/h.html"
+      }
     ]
   },
   "firestore": {

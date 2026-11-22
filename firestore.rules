@@ -13,6 +13,35 @@ service cloud.firestore {
       allow read: if isAdmin() || (isMember() && who == email());
       allow write: if isMember() && who == email() && request.resource.data.email == email();
     }
+    // Homes shared with tenants: anyone with the exact link can open one; nobody can list them.
+    match /shares/{id} { allow get: if true; allow list, write: if isMember(); }
+    // Visits booked from a shared link. Tenants create (status booked), read by id, cancel, mark visited, say liked.
+    match /visits/{id} {
+      allow get: if true;
+      allow list: if isMember();
+      allow create: if isMember() || (
+        request.resource.data.keys().hasOnly(['sid','tid','pid','at','name','phone','code','status','createdAt'])
+        && request.resource.data.status == 'booked'
+        && request.resource.data.code is string && request.resource.data.code.size() == 4
+        && request.resource.data.name is string && request.resource.data.name.size() <= 80
+        && request.resource.data.phone is string && request.resource.data.phone.size() <= 20
+        && exists(/databases/$(database)/documents/shares/$(request.resource.data.sid))
+        && get(/databases/$(database)/documents/shares/$(request.resource.data.sid)).data.tid == request.resource.data.tid
+        && get(/databases/$(database)/documents/shares/$(request.resource.data.sid)).data.pid == request.resource.data.pid);
+      allow update: if isMember() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','liked','updatedAt'])
+        && resource.data.status in ['booked','visited']
+        && request.resource.data.status in ['cancelled','visited','booked']
+        && (!('liked' in request.resource.data) || request.resource.data.liked in ['yes','no']));
+      allow delete: if isAdmin();
+    }
+    // Quick replies from a shared link ("Not for me").
+    match /replies/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['sid','tid','pid','kind','at']) && request.resource.data.kind == 'notforme'
+        && exists(/databases/$(database)/documents/shares/$(request.resource.data.sid));
+      allow read, update: if isMember();
+      allow delete: if isAdmin();
+    }
     // Desk data
     match /leads/{id} { allow read, write: if isMember(); }
     match /config/{id} { allow read, write: if isMember(); }
