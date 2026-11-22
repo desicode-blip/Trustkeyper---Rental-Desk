@@ -42,3 +42,4 @@ exports.drive = onCall({region: 'asia-south1', memory: '1GiB', timeoutSeconds: 1
   }
   throw new HttpsError('invalid-argument', 'Unknown tool.');
 });
+

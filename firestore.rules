@@ -7,7 +7,9 @@ service cloud.firestore {
     function isMember() { return isAdmin() || (signedIn() && exists(/databases/$(database)/documents/access/$(email()))); }
 
     // Team list: members can check it, only admins change it.
-    match /access/{who} { allow read: if isMember(); allow write: if isAdmin(); }
+    match /access/{who} { allow read: if isAdmin() || (signedIn() && who == email()); allow write: if isAdmin(); }
+    // A lead is visible to admins and to the people listed in its viewers (kept by the leadViewers function).
+    function sees(d) { return isAdmin() || (isMember() && email() in d.get('viewers', [])); }
     // Profiles: each member reads and writes only their own; admins read all.
     match /profiles/{who} {
       allow read: if isAdmin() || (isMember() && who == email());
@@ -18,7 +20,7 @@ service cloud.firestore {
     // Visits booked from a shared link. Tenants create (status booked), read by id, cancel, mark visited, say liked.
     match /visits/{id} {
       allow get: if true;
-      allow list: if isMember();
+      allow list: if isAdmin() || sees(resource.data);
       allow create: if isMember() || (
         request.resource.data.keys().hasOnly(['sid','tid','pid','at','name','phone','code','status','createdAt'])
         && request.resource.data.status == 'booked'
@@ -28,7 +30,7 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/shares/$(request.resource.data.sid))
         && get(/databases/$(database)/documents/shares/$(request.resource.data.sid)).data.tid == request.resource.data.tid
         && get(/databases/$(database)/documents/shares/$(request.resource.data.sid)).data.pid == request.resource.data.pid);
-      allow update: if isMember() || (
+      allow update: if isAdmin() || (sees(resource.data) && request.resource.data.get('viewers', []) == resource.data.get('viewers', [])) || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','liked','updatedAt'])
         && resource.data.status in ['booked','visited']
         && request.resource.data.status in ['cancelled','visited','booked']
@@ -39,11 +41,17 @@ service cloud.firestore {
     match /replies/{id} {
       allow create: if request.resource.data.keys().hasOnly(['sid','tid','pid','kind','at']) && request.resource.data.kind == 'notforme'
         && exists(/databases/$(database)/documents/shares/$(request.resource.data.sid));
-      allow read, update: if isMember();
+      allow read: if sees(resource.data);
+      allow update: if isAdmin() || (sees(resource.data) && request.resource.data.get('viewers', []) == resource.data.get('viewers', []));
       allow delete: if isAdmin();
     }
     // Desk data
-    match /leads/{id} { allow read, write: if isMember(); }
+    match /leads/{id} {
+      allow read: if sees(resource.data);
+      allow create: if isAdmin() || (isMember() && request.resource.data.get('viewers', []) == [email()]);
+      allow update: if isAdmin() || (sees(resource.data) && request.resource.data.get('viewers', []) == resource.data.get('viewers', []));
+      allow delete: if isAdmin();
+    }
     match /config/{id} { allow read, write: if isMember(); }
     // Feedback: each person writes and reads their own; admins read all and set status/reply.
     match /feedback/{id} {
