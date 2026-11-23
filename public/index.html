@@ -549,6 +549,10 @@ body.withcall #main{margin-right:min(640px,50vw)}
 .twlist.one .twrow{align-items:flex-start}.twn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:2px}.twlist.one .twmain{flex:1}
 .tag.tier.t0{background:#fdecea;color:#b3261e}.tag.tier.t1{background:var(--green-soft);color:var(--accent)}.tag.tier.t2{background:var(--amber-soft);color:var(--amber)}
 .twshort{display:flex;gap:10px;align-items:flex-start;background:var(--amber-soft);color:var(--amber);border-radius:14px;padding:12px 14px;margin-bottom:14px}.twshort svg{width:18px;height:18px;flex:none;margin-top:2px}
+.filterbar .sortpill svg{width:14px;height:14px}.filterbar .sortpill{display:inline-flex;align-items:center;gap:5px}.dwrap{position:relative}.dx{display:inline-grid;place-items:center;margin-left:2px;border-radius:50%;width:18px;height:18px}.dx:hover{background:rgba(0,0,0,.08)}
+.datepop{position:absolute;top:calc(100% + 8px);left:0;z-index:40;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 36px rgba(0,0,0,.16);padding:14px;width:340px;display:flex;flex-direction:column;gap:10px}.datepop .lab{margin:0;font-weight:700}.dqk{display:flex;flex-wrap:wrap;gap:6px}.drow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.drow input{width:100%}
+.filter.mini{min-width:0;width:auto;max-width:150px}
+.sortbar:not(.filterbar){min-width:max-content}.tools .filterbar{flex:0 0 auto;overflow:visible;gap:6px}.tools .filterbar .filter{border:0;background:var(--bg,transparent);padding:6px 8px}
 </style>
 </head>
 <body>
@@ -888,6 +892,7 @@ function filterList(list){
  return sortList(list).filter(l=>{
   if(S.kindFilter!=='all'&&l.kind!==S.kindFilter)return false;
   if(S.source!=='all'&&sourceGroup(l)!==S.source)return false;
+  if(S.dFrom||S.dTo){const d=addedDay(l);if(!d||(S.dFrom&&d<S.dFrom)||(S.dTo&&d>S.dTo))return false;}
   if(S.contact==='phone'&&!phone(l.phone))return false;
   if(S.contact==='missing'&&phone(l.phone))return false;
   if(S.contact==='broker'&&!isBroker(l))return false;
@@ -900,13 +905,22 @@ function filterList(list){
 function sourceGroup(l){const s=String(l.source||'');if(s.startsWith('Facebook'))return 'Facebook';if(s.startsWith('WhatsApp'))return 'WhatsApp';if(l.source==='Excel reference')return 'Existing sheet';if(l.discoveredAt)return 'Other online';return 'Manual / other';}
 const stamp=l=>String(l.addedAt||l.discoveredAt||(date(l.added)?date(l.added)+'T12:00:00':'')||l.postedAt||'');
 const newest=(a,b)=>stamp(b).localeCompare(stamp(a));
+function addedDay(l){const s=stamp(l);if(!s)return '';if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const d=new Date(s);return isNaN(d)?s.slice(0,10):d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});}
+const isoDay=d=>d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+function dateRangeLabel(){const f=x=>new Date(x+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});if(!S.dFrom&&!S.dTo)return 'Date added';if(S.dFrom&&S.dTo)return S.dFrom===S.dTo?f(S.dFrom):f(S.dFrom)+' – '+f(S.dTo);return S.dFrom?'From '+f(S.dFrom):'Till '+f(S.dTo);}
+function datePop(){if(!S.datePop)return '';const t=new Date();const d0=isoDay(t);const back=n=>{const x=new Date(t);x.setDate(x.getDate()-n);return isoDay(x);};const m0=isoDay(new Date(t.getFullYear(),t.getMonth(),1));
+ const quick=[['Today',d0,d0],['Yesterday',back(1),back(1)],['Last 7 days',back(6),d0],['Last 30 days',back(29),d0],['This month',m0,d0]];
+ return `<div class="datepop" role="dialog" aria-label="Leads added between"><p class="lab">Leads added between</p><div class="dqk">${quick.map(([n,a,b])=>`<button type="button" class="chip1 ${S.dFrom===a&&S.dTo===b?'on':''}" data-act="dquick" data-from="${a}" data-to="${b}">${n}</button>`).join('')}</div>
+ <div class="drow"><label class="field"><span class="lab">From</span><input type="date" id="dfrom" value="${S.dFrom||''}" max="${d0}"></label><label class="field"><span class="lab">To</span><input type="date" id="dto" value="${S.dTo||''}" max="${d0}"></label></div>
+ <div class="row"><button class="btn primary" data-act="dapply">Apply</button><button class="btn" data-act="dclear">Clear</button></div></div>`;}
 function toolsBar(){
  const sk=S.sortKey||'rel',sd=S.sortDir||'desc',rentLbl=S.view==='tenants'?'Budget':S.view==='properties'?'Rent':'Rent / budget';
  return `<div class="tools ${S.searchFocus?'searching':''}"><label class="search"><span class="sr">Search</span>${icon('search')}<input id="q" placeholder="${S.searchFocus?'Search name, number or area':'Search'}" value="${esc(S.query)}" autocomplete="off"></label>
  <div class="sortbar" role="group" aria-label="Sort by"><span class="sortlab">Sort by</span>${SORTS.map(([k,t])=>{const on=sk===k;const lbl=k==='rent'?rentLbl:t;return `<button type="button" class="sortpill ${on?'on':''}" data-sortkey="${k}" aria-pressed="${on}" title="${k==='rel'?'Golden leads first, then newest':on?(sd==='asc'?'Ascending. Click for descending':'Descending. Click for ascending'):'Sort by '+lbl}">${esc(lbl)}${on&&k!=='rel'?`<span class="sdir">${icon(sd==='asc'?'arrow-up':'arrow-down')}</span>`:''}</button>`;}).join('')}</div>
- <select class="filter" id="fsource" aria-label="Source">${['all','Facebook','WhatsApp','Existing sheet','Other online','Manual / other'].map(v=>`<option value="${v}" ${S.source===v?'selected':''}>${v==='all'?'All sources':v}</option>`).join('')}</select>
+ <div class="sortbar filterbar" role="group" aria-label="Filter"><span class="sortlab">Filter</span><span class="dwrap"><button type="button" class="sortpill ${S.dFrom||S.dTo?'on':''}" data-act="dpop" aria-expanded="${!!S.datePop}">${icon('calendar')}${esc(dateRangeLabel())}${S.dFrom||S.dTo?`<span class="dx" data-act="dclear" title="Clear dates">${icon('x')}</span>`:''}</button>${datePop()}</span>
+ <select class="filter mini" id="fsource" aria-label="Source">${['all','Facebook','WhatsApp','Existing sheet','Other online','Manual / other'].map(v=>`<option value="${v}" ${S.source===v?'selected':''}>${v==='all'?'Sources':v}</option>`).join('')}</select>
  ${S.view==='brokers'||S.view==='followups'?`<select class="filter" id="fkind" aria-label="Lead type">${[['all','Tenants and properties'],['tenant','Tenants'],['owner','Properties']].map(([v,t])=>`<option value="${v}" ${S.kindFilter===v?'selected':''}>${t}</option>`).join('')}</select>`:''}
- <select class="filter" id="fcontact" aria-label="Contact">${[['all','All contacts'],['golden','Golden leads (sales sheet)'],...(S.view==='properties'?[['owners','Home owners']]:[]),['phone','Has phone'],['missing','Missing phone'],['broker','Brokers'],['sheet','Sheet updates to review']].map(([v,t])=>`<option value="${v}" ${S.contact===v?'selected':''}>${t}</option>`).join('')}</select></div>`;
+ <select class="filter mini" id="fcontact" aria-label="Contact">${[['all','Contacts'],['golden','Golden leads (sales sheet)'],...(S.view==='properties'?[['owners','Home owners']]:[]),['phone','Has phone'],['missing','Missing phone'],['broker','Brokers'],['sheet','Sheet updates to review']].map(([v,t])=>`<option value="${v}" ${S.contact===v?'selected':''}>${t}</option>`).join('')}</select></div></div>`;
 }
 function listView(c){
  const v=S.view;let html='';
@@ -1537,11 +1551,16 @@ document.addEventListener('click',async e=>{
   if(ch.dataset.chip){const k=ch.dataset.chip,val=ch.dataset.val;const cur=String(d.details[k]??'');d.details[k]=(cur===val||(k==='requirement'&&val==='4+ BHK'&&bigBhk(cur)))?'':val;}
   else{const k=ch.dataset.step,n=parseInt(String(d.details[k]??'').replace(/[^\d]/g,''),10)||0;d.details[k]=String(Math.max(0,Math.min(+ch.dataset.max||100,n+(+ch.dataset.d))));}
   renderCard(l.id);queueSave(l);return;}
+ if(S.datePop&&!e.target.closest('.dwrap')){S.datePop=false;render(true);}
  const b=e.target.closest('[data-act]');if(!b)return;
  const act=b.dataset.act,id=b.dataset.id,l=id?S.byId.get(id):null;
  if(act==='closemodal'){keepAdd();S.modal=null;renderLayer();return;}
  if(act==='fbmic'){fbStartStop();return;}
  if(act==='golead'){goLead(id);return;}
+ if(act==='dpop'){if(e.target.closest('.dx'))return;S.datePop=!S.datePop;render(true);return;}
+ if(act==='dquick'){S.dFrom=b.dataset.from;S.dTo=b.dataset.to;S.datePop=false;S.limit=20;render(true);return;}
+ if(act==='dapply'){let f=document.getElementById('dfrom')?.value||'',t=document.getElementById('dto')?.value||'';if(f&&t&&f>t)[f,t]=[t,f];S.dFrom=f;S.dTo=t;S.datePop=false;S.limit=20;render(true);return;}
+ if(act==='dclear'){S.dFrom='';S.dTo='';S.datePop=false;render(true);return;}
  if(act==='callwith'){S.modal={type:'callwith',id};renderLayer();return;}
  if(act==='callapp'){const ai=document.getElementById('callai')?.checked!==false;S.callAiOff=!ai;S.modal=null;renderLayer();openCallApp(l,b.dataset.app);markOpened?.(l.id);if(ai)openCallPanel(l.id);return;}
  if(act==='callstart'){startListening();return;}
