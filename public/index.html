@@ -595,6 +595,16 @@ body.withcall #main{margin-right:min(640px,50vw)}
 .datepop{max-width:calc(100vw - 32px)}
 @media(max-width:767px){.datepop{position:fixed;left:16px!important;right:16px!important;top:auto!important;bottom:16px;width:auto}}
 a.brand{color:inherit;text-decoration:none;cursor:pointer;border-radius:12px}a.brand:hover .brandmark{filter:brightness(1.1)}a.brand:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.datepop{width:auto;min-width:340px;padding:0;gap:0;overflow:hidden}
+.dphead{display:flex;align-items:stretch;gap:6px;padding:12px 14px;border-bottom:1px solid var(--line)}.dpf{flex:1;display:flex;gap:8px;align-items:center;text-align:left;background:none;border:0;border-bottom:2px solid transparent;padding:4px 6px;font:inherit;cursor:pointer;color:var(--ink)}.dpf svg{width:16px;height:16px;color:var(--muted)}.dpf small{display:block;color:var(--muted);font-size:12px}.dpf b{font-size:15px}.dpf.act{border-bottom-color:var(--accent)}.dpf.act b{color:var(--accent)}.dpdash{align-self:center;color:var(--muted)}
+.datepop .dqk{padding:10px 14px 0}
+.dpcal{position:relative;display:flex;gap:24px;padding:10px 18px 4px}.dpm{flex:1;min-width:252px}.dpmt{text-align:center;font-size:16px;margin:4px 0 10px}.dpmt b{font-weight:800}
+.dpg{display:grid;grid-template-columns:repeat(7,36px);row-gap:4px}.dpg i{font-style:normal;text-align:center;font-size:12px;color:var(--muted);padding-bottom:6px}
+.dpd{height:36px;border:0;background:none;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);border-radius:0}.dpd:hover:not(:disabled){background:var(--green-soft)}.dpd:disabled{color:#c4ccd4;cursor:default}
+.dpd.in{background:color-mix(in srgb,var(--accent) 14%,transparent)}.dpd.s,.dpd.e{background:var(--accent)!important;color:#fff;font-weight:800;border-radius:8px}.dpd.s.in,.dpd.e.in{border-radius:8px}.dpd.td:not(.s):not(.e){font-weight:800;text-decoration:underline}
+.dpnav{position:absolute;top:10px;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}.dpnav svg{width:16px;height:16px}.dpnav.prev{left:10px}.dpnav.next{right:10px}.dpnav:disabled{opacity:.35;cursor:default}
+.dpfoot{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}.dpfoot .place{flex:1;margin:0}
+@media(max-width:767px){.dpcal{padding:10px 8px}.dpm{min-width:0}.dpg{grid-template-columns:repeat(7,1fr)}.datepop{min-width:0;max-height:calc(100vh - 32px);overflow:auto}}
 </style>
 </head>
 <body>
@@ -951,11 +961,22 @@ const newest=(a,b)=>stamp(b).localeCompare(stamp(a));
 function addedDay(l){const s=stamp(l);if(!s)return '';if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const d=new Date(s);return isNaN(d)?s.slice(0,10):d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});}
 const isoDay=d=>d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
 function dateRangeLabel(){const f=x=>new Date(x+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});if(!S.dFrom&&!S.dTo)return 'Date added';if(S.dFrom&&S.dTo)return S.dFrom===S.dTo?f(S.dFrom):f(S.dFrom)+' – '+f(S.dTo);return S.dFrom?'From '+f(S.dFrom):'Till '+f(S.dTo);}
-function datePop(){if(!S.datePop)return '';const t=new Date();const d0=isoDay(t);const back=n=>{const x=new Date(t);x.setDate(x.getDate()-n);return isoDay(x);};const m0=isoDay(new Date(t.getFullYear(),t.getMonth(),1));
+/* Range calendar (MakeMyTrip style): first tap = From, second tap = To, days in between light up; hovering previews the range. */
+const DP={from:'',to:'',month:'',hover:''};
+const dpFmt=x=>x?new Date(x+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'';
+function dpMonthHtml(y,m){const first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),today=isoDay(new Date());const a=DP.from,b=DP.to||(DP.from&&DP.hover&&DP.hover>DP.from?DP.hover:'');let cells='';for(let k=0;k<first.getDay();k++)cells+='<span></span>';
+ for(let d=1;d<=days;d++){const iso=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const fut=iso>today;const cls=[iso===a?'s':'',iso===b?'e':'',a&&b&&iso>a&&iso<b?'in':'',iso===today?'td':''].join(' ');cells+=`<button type="button" class="dpd ${cls}" data-act="dpday" data-day="${iso}" ${fut?'disabled':''}>${d}</button>`;}
+ return `<div class="dpm"><div class="dpmt"><b>${first.toLocaleDateString('en-IN',{month:'long'})}</b> ${y}</div><div class="dpg">${['Su','Mo','Tu','We','Th','Fr','Sa'].map(x=>`<i>${x}</i>`).join('')}${cells}</div></div>`;}
+function datePopInner(){const t=new Date();const d0=isoDay(t);const back=n=>{const x=new Date(t);x.setDate(x.getDate()-n);return isoDay(x);};const m0=isoDay(new Date(t.getFullYear(),t.getMonth(),1));
+ if(!DP.month){const base=new Date((DP.to||DP.from||d0)+'T12:00:00');DP.month=isoDay(new Date(base.getFullYear(),base.getMonth()-1,1)).slice(0,7);}
+ const [y,mo]=DP.month.split('-').map(Number);const two=innerWidth>=768;const nxt=new Date(y,mo,1);const lastShown=two?isoDay(nxt).slice(0,7):DP.month;const atEnd=lastShown>=d0.slice(0,7);
  const quick=[['Today',d0,d0],['Yesterday',back(1),back(1)],['Last 7 days',back(6),d0],['Last 30 days',back(29),d0],['This month',m0,d0]];
- return `<div class="datepop" role="dialog" aria-label="Leads added between"><p class="lab">Leads added between</p><div class="dqk">${quick.map(([n,a,b])=>`<button type="button" class="chip1 ${S.dFrom===a&&S.dTo===b?'on':''}" data-act="dquick" data-from="${a}" data-to="${b}">${n}</button>`).join('')}</div>
- <div class="drow"><label class="field"><span class="lab">From</span><input type="date" id="dfrom" value="${S.dFrom||''}" max="${d0}"></label><label class="field"><span class="lab">To</span><input type="date" id="dto" value="${S.dTo||''}" max="${d0}"></label></div>
- <div class="row"><button class="btn primary" data-act="dapply">Apply</button><button class="btn" data-act="dclear">Clear</button></div></div>`;}
+ return `<div class="dphead"><button type="button" class="dpf ${!DP.from||DP.to?'act':''}" data-act="dpfocus" data-k="from">${icon('calendar')}<span><small>From</small><b>${DP.from?dpFmt(DP.from):'Select date'}</b></span></button><span class="dpdash">–</span><button type="button" class="dpf ${DP.from&&!DP.to?'act':''}" data-act="dpfocus" data-k="to">${icon('calendar')}<span><small>To</small><b>${DP.to?dpFmt(DP.to):DP.from?'Select end date':'Select date'}</b></span></button></div>
+ <div class="dqk">${quick.map(([n,a,b])=>`<button type="button" class="chip1 ${DP.from===a&&DP.to===b?'on':''}" data-act="dquick" data-from="${a}" data-to="${b}">${n}</button>`).join('')}</div>
+ <div class="dpcal"><button type="button" class="dpnav prev" data-act="dpmonth" data-step="-1" aria-label="Earlier month">${icon('arrow-left')}</button>${dpMonthHtml(y,mo-1)}${two?dpMonthHtml(nxt.getFullYear(),nxt.getMonth()):''}<button type="button" class="dpnav next" data-act="dpmonth" data-step="1" aria-label="Later month" ${atEnd?'disabled':''}>${icon('arrow-right')}</button></div>
+ <div class="row dpfoot"><span class="place">${DP.from&&DP.to?(DP.from===DP.to?dpFmt(DP.from):dpFmt(DP.from)+' to '+dpFmt(DP.to)):DP.from?'Now pick the end date':'Pick the first date'}</span><button class="btn" data-act="dclear">Clear</button><button class="btn primary" data-act="dapply" ${DP.from?'':'disabled'}>Apply</button></div>`;}
+function datePop(){if(!S.datePop)return '';return `<div class="datepop" role="dialog" aria-label="Leads added between">${datePopInner()}</div>`;}
+function redrawDatePop(){const p=document.querySelector('.datepop');if(!p)return;p.innerHTML=datePopInner();fixIcons();}
 function toolsBar(){
  const sk=S.sortKey||'rel',sd=S.sortDir||'desc',rentLbl=S.view==='tenants'?'Budget':S.view==='properties'?'Rent':'Rent / budget';
  return `<div class="tools ${S.searchFocus?'searching':''}"><label class="search"><span class="sr">Search</span>${icon('search')}<input id="q" placeholder="${S.searchFocus?'Search name, number or area':'Search'}" value="${esc(S.query)}" autocomplete="off"></label>
@@ -1600,9 +1621,12 @@ document.addEventListener('click',async e=>{
  if(act==='closemodal'){keepAdd();S.modal=null;renderLayer();return;}
  if(act==='fbmic'){fbStartStop();return;}
  if(act==='golead'){goLead(id);return;}
- if(act==='dpop'){if(e.target.closest('.dx'))return;S.datePop=!S.datePop;render(true);return;}
+ if(act==='dpop'){if(e.target.closest('.dx'))return;S.datePop=!S.datePop;DP.from=S.dFrom||'';DP.to=S.dTo||'';DP.month='';DP.hover='';render(true);return;}
  if(act==='dquick'){S.dFrom=b.dataset.from;S.dTo=b.dataset.to;S.datePop=false;S.limit=20;render(true);return;}
- if(act==='dapply'){let f=document.getElementById('dfrom')?.value||'',t=document.getElementById('dto')?.value||'';if(f&&t&&f>t)[f,t]=[t,f];S.dFrom=f;S.dTo=t;S.datePop=false;S.limit=20;render(true);return;}
+ if(act==='dpday'){const d=b.dataset.day;if(!DP.from||DP.to||d<DP.from){DP.from=d;DP.to='';}else DP.to=d;DP.hover='';redrawDatePop();return;}
+ if(act==='dpfocus'){if(b.dataset.k==='from'){DP.to='';}redrawDatePop();return;}
+ if(act==='dpmonth'){const [y,m]=DP.month.split('-').map(Number);DP.month=isoDay(new Date(y,m-1+Number(b.dataset.step),1)).slice(0,7);redrawDatePop();return;}
+ if(act==='dapply'){S.dFrom=DP.from;S.dTo=DP.to||DP.from;S.datePop=false;S.limit=20;render(true);return;}
  if(act==='dclear'){S.dFrom='';S.dTo='';S.datePop=false;render(true);return;}
  if(act==='callwith'){S.modal={type:'callwith',id};renderLayer();return;}
  if(act==='callapp'){const ai=document.getElementById('callai')?.checked!==false;S.callAiOff=!ai;S.modal=null;renderLayer();openCallApp(l,b.dataset.app);markOpened?.(l.id);if(ai)openCallPanel(l.id);return;}
@@ -2055,6 +2079,7 @@ document.addEventListener('input',e=>{
  if(t.dataset.field&&t.tagName==='SELECT')t.closest('.field')?.classList.toggle('ok',!!t.value);
 });
 document.addEventListener('input',e=>{if(e.target.id!=='flex-n'||S.modal?.type!=='flex')return;const l=S.byId.get(S.modal.id);const amt=l&&money(draftOf(l).details.amountText);const n=Number(e.target.value.replace(/[^\d]/g,''))||0;const el=document.getElementById('flex-range');if(el&&amt)el.innerHTML='Range: <b>₹'+Math.max(0,amt-n*1000).toLocaleString('en-IN')+' – ₹'+(amt+n*1000).toLocaleString('en-IN')+'</b>';document.querySelectorAll('[data-act=flexpick]').forEach(b=>b.classList.toggle('on',+b.dataset.val===n));});
+document.addEventListener('mouseover',e=>{const d=e.target.closest?.('.dpd');if(!d||!DP.from||DP.to)return;if(DP.hover===d.dataset.day)return;DP.hover=d.dataset.day;document.querySelectorAll('.datepop .dpd').forEach(x=>{const v=x.dataset.day;x.classList.toggle('e',v===DP.hover&&v>DP.from);x.classList.toggle('in',v>DP.from&&v<DP.hover);});});
 document.addEventListener('change',e=>{
  if(e.target.dataset?.tset){const d=teamDraft(e.target.dataset.email),k=e.target.dataset.tset;d[k]=k==='limited'?!e.target.checked:e.target.checked;const f=document.getElementById('tfee-'+e.target.dataset.email);if(f)d.fee=f.value.replace(/\D/g,'');render(true);return;}
  if(e.target.dataset?.tfee){teamDraft(e.target.dataset.tfee).fee=e.target.value.replace(/\D/g,'');return;}
