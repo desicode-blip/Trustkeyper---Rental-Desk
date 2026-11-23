@@ -552,7 +552,18 @@ body.withcall #main{margin-right:min(640px,50vw)}
 .filterbar .sortpill svg{width:14px;height:14px}.filterbar .sortpill{display:inline-flex;align-items:center;gap:5px}.dwrap{position:relative}.dx{display:inline-grid;place-items:center;margin-left:2px;border-radius:50%;width:18px;height:18px}.dx:hover{background:rgba(0,0,0,.08)}
 .datepop{position:absolute;top:calc(100% + 8px);left:0;z-index:40;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 36px rgba(0,0,0,.16);padding:14px;width:340px;display:flex;flex-direction:column;gap:10px}.datepop .lab{margin:0;font-weight:700}.dqk{display:flex;flex-wrap:wrap;gap:6px}.drow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.drow input{width:100%}
 .filter.mini{min-width:0;width:auto;max-width:150px}
-.sortbar:not(.filterbar){min-width:max-content}.tools .filterbar{flex:0 0 auto;overflow:visible;gap:6px}.tools .filterbar .filter{border:0;background:var(--bg,transparent);padding:6px 8px}
+/* Toolbar: compact search, sort group, filter group: all on one line on a laptop */
+.tools{gap:8px}
+.tools .search{flex:1 1 150px;min-width:130px;max-width:320px;height:42px}
+.tools.searching .search{flex:1 1 100%}
+.sortbar{padding:4px}.sortlab{margin:0 4px 0 6px;font-size:11px}
+.sortbar:not(.filterbar){flex:0 1 auto;min-width:max-content}.sortbar:not(.filterbar) .sortpill{padding:7px 9px}
+.tools .filterbar{flex:0 0 auto;overflow:visible;gap:4px}
+.tools .filterbar .fctl{appearance:none;-webkit-appearance:none;field-sizing:content;max-width:none;min-width:0;height:32px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;color:var(--ink);background:var(--bg,#f3f5f4);border:1px solid var(--line);border-radius:9px;padding:0 10px;cursor:pointer;white-space:nowrap}
+.tools .filterbar select.fctl{padding-right:26px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235e7087' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.tools .filterbar .fctl:hover{border-color:var(--accent)}.tools .filterbar .fctl.on{background:var(--green-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.tools .filterbar .fctl svg{width:14px;height:14px;color:var(--muted)}.tools .filterbar .fctl.on svg{color:var(--accent)}
+.tools .filterbar .dwrap .fctl{padding-right:10px}
 </style>
 </head>
 <body>
@@ -917,10 +928,10 @@ function toolsBar(){
  const sk=S.sortKey||'rel',sd=S.sortDir||'desc',rentLbl=S.view==='tenants'?'Budget':S.view==='properties'?'Rent':'Rent / budget';
  return `<div class="tools ${S.searchFocus?'searching':''}"><label class="search"><span class="sr">Search</span>${icon('search')}<input id="q" placeholder="${S.searchFocus?'Search name, number or area':'Search'}" value="${esc(S.query)}" autocomplete="off"></label>
  <div class="sortbar" role="group" aria-label="Sort by"><span class="sortlab">Sort by</span>${SORTS.map(([k,t])=>{const on=sk===k;const lbl=k==='rent'?rentLbl:t;return `<button type="button" class="sortpill ${on?'on':''}" data-sortkey="${k}" aria-pressed="${on}" title="${k==='rel'?'Golden leads first, then newest':on?(sd==='asc'?'Ascending. Click for descending':'Descending. Click for ascending'):'Sort by '+lbl}">${esc(lbl)}${on&&k!=='rel'?`<span class="sdir">${icon(sd==='asc'?'arrow-up':'arrow-down')}</span>`:''}</button>`;}).join('')}</div>
- <div class="sortbar filterbar" role="group" aria-label="Filter"><span class="sortlab">Filter</span><span class="dwrap"><button type="button" class="sortpill ${S.dFrom||S.dTo?'on':''}" data-act="dpop" aria-expanded="${!!S.datePop}">${icon('calendar')}${esc(dateRangeLabel())}${S.dFrom||S.dTo?`<span class="dx" data-act="dclear" title="Clear dates">${icon('x')}</span>`:''}</button>${datePop()}</span>
- <select class="filter mini" id="fsource" aria-label="Source">${['all','Facebook','WhatsApp','Existing sheet','Other online','Manual / other'].map(v=>`<option value="${v}" ${S.source===v?'selected':''}>${v==='all'?'Sources':v}</option>`).join('')}</select>
+ <div class="sortbar filterbar" role="group" aria-label="Filter"><span class="sortlab">Filter</span><span class="dwrap"><button type="button" class="fctl ${S.dFrom||S.dTo?'on':''}" data-act="dpop" aria-expanded="${!!S.datePop}">${icon('calendar')}${esc(dateRangeLabel())}${S.dFrom||S.dTo?`<span class="dx" data-act="dclear" title="Clear dates">${icon('x')}</span>`:''}</button>${datePop()}</span>
+ <select class="fctl ${S.source!=='all'?'on':''}" id="fsource" aria-label="Source">${['all','Facebook','WhatsApp','Existing sheet','Other online','Manual / other'].map(v=>`<option value="${v}" ${S.source===v?'selected':''}>${v==='all'?'Sources':v}</option>`).join('')}</select>
  ${S.view==='brokers'||S.view==='followups'?`<select class="filter" id="fkind" aria-label="Lead type">${[['all','Tenants and properties'],['tenant','Tenants'],['owner','Properties']].map(([v,t])=>`<option value="${v}" ${S.kindFilter===v?'selected':''}>${t}</option>`).join('')}</select>`:''}
- <select class="filter mini" id="fcontact" aria-label="Contact">${[['all','Contacts'],['golden','Golden leads (sales sheet)'],...(S.view==='properties'?[['owners','Home owners']]:[]),['phone','Has phone'],['missing','Missing phone'],['broker','Brokers'],['sheet','Sheet updates to review']].map(([v,t])=>`<option value="${v}" ${S.contact===v?'selected':''}>${t}</option>`).join('')}</select></div></div>`;
+ <select class="fctl ${S.contact!=='all'?'on':''}" id="fcontact" aria-label="Contact">${[['all','Contacts'],['golden','Golden leads (sales sheet)'],...(S.view==='properties'?[['owners','Home owners']]:[]),['phone','Has phone'],['missing','Missing phone'],['broker','Brokers'],['sheet','Sheet updates to review']].map(([v,t])=>`<option value="${v}" ${S.contact===v?'selected':''}>${t}</option>`).join('')}</select></div></div>`;
 }
 function listView(c){
  const v=S.view;let html='';
