@@ -564,6 +564,36 @@ body.withcall #main{margin-right:min(640px,50vw)}
 .tools .filterbar .fctl:hover{border-color:var(--accent)}.tools .filterbar .fctl.on{background:var(--green-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
 .tools .filterbar .fctl svg{width:14px;height:14px;color:var(--muted)}.tools .filterbar .fctl.on svg{color:var(--accent)}
 .tools .filterbar .dwrap .fctl{padding-right:10px}
+
+/* ===== Resizing rules (one place). Edge margin everywhere: 16px.
+   ≥1280 desktop: side menu 232px, toolbar on one line.
+   1024–1279 small laptop: side menu 200px, toolbar may wrap to two lines (filters drop below).
+   768–1023 tablet: menu becomes a top bar; content uses the full width; two-column sections stack.
+   <768 phone: page padding 16px; search full width; sort and filter rows scroll sideways; every field one per row; pop-ups become sheets 16px from the edges; tap targets at least 40px. */
+.shell{grid-template-columns:232px minmax(0,1fr)}#main,main{min-width:0}
+.search svg{width:18px;height:18px;flex:none}.tabs{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}.tabs::-webkit-scrollbar{display:none}.tabs>*{flex:none}
+@media(max-width:1279px){.shell{grid-template-columns:216px minmax(0,1fr)}.nav button{white-space:nowrap}
+ .tools{flex-wrap:wrap}.tools .search{flex:1 1 160px;max-width:none}.sortbar:not(.filterbar){min-width:0;overflow-x:auto;scrollbar-width:none;flex:1 1 auto}.sortbar::-webkit-scrollbar{display:none}}
+@media(max-width:1023px){.shell{grid-template-columns:minmax(0,1fr)}
+ .rail{position:sticky;top:0;z-index:30;height:auto;flex-direction:row;align-items:center;padding:8px 16px;gap:12px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
+ .rail .brand small,.railfoot{display:none}.nav{flex-direction:row;gap:4px}.nav button{white-space:nowrap;padding:8px 10px}#whoami{flex:none}
+ main{padding:16px 16px 80px}
+ .optcols{column-count:1!important}.notes{grid-template-columns:1fr!important}.notes>.nhwrap{grid-column:auto!important;grid-row:auto!important}.nhbox{min-height:260px}
+ .twgrid{grid-template-columns:1fr!important}.pair{grid-template-columns:1fr}
+ body.withcall #main{margin-right:0}#callpanel .callpanel{left:16px;right:16px;width:auto;top:auto;height:70vh;bottom:16px}}
+@media(max-width:767px){
+ .head{flex-wrap:wrap!important;gap:10px;min-height:0!important}.head>div:first-child{flex:1 1 100%!important;min-width:0;width:100%}.head h1{font-size:26px}.tools .filterbar .fctl{flex:none}.head .btn.primary{width:100%;justify-content:center}
+ .tools{gap:8px}.tools .search{flex:1 1 100%;min-width:0}.tools .sortbar{flex:1 1 100%;max-width:100%}.tools .filterbar{flex-wrap:nowrap;overflow-x:auto}
+ .tools.searching .sortbar{flex:0 0 0}
+ .card{padding:12px}.hdwrap{flex-wrap:wrap}.hdright{flex-basis:100%}.stcol{flex-direction:row;flex-wrap:wrap;align-items:center}
+ .fgrid,.rentpair,.furow,.mcgrid,.drow{grid-template-columns:1fr!important}.fgrid .field,.ctl{min-width:0;width:100%}.chipset{flex-wrap:wrap}
+ .twrow{flex-wrap:wrap}.twact{width:100%;justify-content:flex-end}.thead{flex-wrap:wrap}.tright{width:100%;justify-content:space-between}
+ .modal{width:calc(100vw - 32px)!important;max-width:none!important;max-height:calc(100vh - 32px);overflow:auto}
+ .btn,.chip1,.sortpill,.fctl{min-height:40px}
+ .cpcols{grid-template-columns:1fr}#callpanel .callpanel{inset:0;border-radius:0;height:auto}}
+/* Date box: always 16px from the screen edges (placed by JS on wide screens, a sheet on phones) */
+.datepop{max-width:calc(100vw - 32px)}
+@media(max-width:767px){.datepop{position:fixed;left:16px!important;right:16px!important;top:auto!important;bottom:16px;width:auto}}
 </style>
 </head>
 <body>
@@ -801,7 +831,8 @@ const icon=(n)=>{let s=ICACHE.get(n);if(s)return s;const L=window.lucide&&lucide
 function histShadows(root){(root||document).querySelectorAll('.nhist').forEach(el=>{const can=el.scrollHeight>el.clientHeight+2;el.classList.toggle('sct',can&&el.scrollTop>2);el.classList.toggle('scb',can&&el.scrollTop+el.clientHeight<el.scrollHeight-2);});}
 document.addEventListener('scroll',e=>{const t=e.target;if(t.classList?.contains('nhist'))histShadows(t.parentElement);},true);
 window.addEventListener('resize',()=>histShadows());
-function fixIcons(){try{translateUI();}catch(e){}requestAnimationFrame(()=>histShadows());if(window.lucide&&document.querySelector('i[data-lucide]'))lucide.createIcons();}
+function placePops(){const p=document.querySelector('.datepop');if(!p||innerWidth<768)return;p.style.left='0px';const r=p.getBoundingClientRect(),m=16;let dx=0;if(r.right>innerWidth-m)dx=innerWidth-m-r.right;if(r.left+dx<m)dx=m-r.left;p.style.left=dx+'px';}
+function fixIcons(){try{translateUI();}catch(e){}requestAnimationFrame(placePops);requestAnimationFrame(()=>histShadows());if(window.lucide&&document.querySelector('i[data-lucide]'))lucide.createIcons();}
 const FIELD_ICONS={name:'user-round',phone:'phone',society:'map-pin',scope:'house',requirement:'bed-double',amountText:'indian-rupee',furnishing:'sofa',food:'utensils',pets:'paw-print',occupancy:'users',workingPreference:'briefcase-business',availableFrom:'calendar-days',moveIn:'calendar-check',unit:'door-open',tower:'building-2',area:'ruler',maintenanceText:'receipt',deposit:'shield-check',brokerage:'handshake',keys:'key-round',parking:'car',photos:'camera',floor:'layers',totalFloors:'chart-no-axes-column',facing:'compass',powerBackup:'zap',lockIn:'timer',balconies:'gallery-vertical-end',bathrooms:'bath',carpetArea:'scan-line',superBuiltUpArea:'expand',previousBooked:'history',customerName:'user-check',customerPhone:'smartphone',linkedin:'link-2',available:'circle-check',locality:'map',brokerageAmount:'wallet',maintenanceMode:'receipt-text',whoCanRent:'users-round',tenantType:'contact',people:'users',rentNegotiable:'badge-percent',visitTimes:'clock',keysWho:'lock-keyhole',carParking:'car',bikeParking:'bike',notice:'bell',email:'mail',occupancy:'house-plus'};
 const availOpts=k=>k==='owner'?[['yes','Yes, still available'],['no','No, already rented']]:[['yes','Yes, still looking'],['no','No, found a home']];
 
