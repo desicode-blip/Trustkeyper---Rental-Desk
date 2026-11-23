@@ -594,12 +594,13 @@ body.withcall #main{margin-right:min(640px,50vw)}
 /* Date box: always 16px from the screen edges (placed by JS on wide screens, a sheet on phones) */
 .datepop{max-width:calc(100vw - 32px)}
 @media(max-width:767px){.datepop{position:fixed;left:16px!important;right:16px!important;top:auto!important;bottom:16px;width:auto}}
+a.brand{color:inherit;text-decoration:none;cursor:pointer;border-radius:12px}a.brand:hover .brandmark{filter:brightness(1.1)}a.brand:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 </style>
 </head>
 <body>
 <div class="shell">
  <aside class="rail">
-  <div class="brand"><span class="brandmark"><i data-lucide="key-round"></i></span><span>Rental Desk<small>TRUSTKEYPER · HYDERABAD</small></span></div>
+  <a class="brand" href="#today" data-nav="today" title="Go to Today's work" aria-label="Rental Desk home"><span class="brandmark"><i data-lucide="key-round"></i></span><span>Rental Desk<small>TRUSTKEYPER · HYDERABAD</small></span></a>
   <nav class="nav" id="nav" aria-label="Main"></nav>
   <div class="railfoot"><span class="dot" id="dot"></span><span id="conn">Connecting…</span></div>
  </aside>
