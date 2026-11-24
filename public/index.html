@@ -605,6 +605,17 @@ a.brand{color:inherit;text-decoration:none;cursor:pointer;border-radius:12px}a.b
 .dpnav{position:absolute;top:10px;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}.dpnav svg{width:16px;height:16px}.dpnav.prev{left:10px}.dpnav.next{right:10px}.dpnav:disabled{opacity:.35;cursor:default}
 .dpfoot{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}.dpfoot .place{flex:1;margin:0}
 @media(max-width:767px){.dpcal{padding:10px 8px}.dpm{min-width:0}.dpg{grid-template-columns:repeat(7,1fr)}.datepop{min-width:0;max-height:calc(100vh - 32px);overflow:auto}}
+.testmode{background:#fff3e0;color:#8a4500;align-self:flex-start}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.planc{display:flex;flex-direction:column;gap:2px;text-align:left;padding:14px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);font:inherit;cursor:pointer}.planc span{font-size:18px;font-weight:800}.planc small{color:var(--muted)}.planc.on{border-color:var(--accent);background:var(--green-soft)}
+.paysum{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px;margin-bottom:10px}.paysum>div{display:flex;justify-content:space-between;gap:10px}.paysum .muted{color:var(--muted);font-size:13px}
+.paymeth{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.paymeth svg{width:15px;height:15px}.paym .btn.wide{margin-top:10px}
+.paydone{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:10px 0}.paydone>svg{width:44px;height:44px;color:var(--accent)}
+.paygate{width:100%;text-align:left}.paygate .modal{box-shadow:none;border:0;padding:0;max-width:none!important;width:100%!important}
+.paylist{list-style:none;margin:0;padding:0}.paylist li{display:grid;grid-template-columns:1.2fr 2fr auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.paylist li:first-child{border-top:0}
+.tag.bill.paid{background:var(--green-soft);color:var(--accent)}.tag.bill.due{background:var(--amber-soft);color:var(--amber)}.tag.bill.overdue{background:#fdecea;color:#b3261e}
+.billbar,.viewas{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:14px;padding:10px 14px;margin-bottom:14px}.billbar{background:var(--amber-soft);color:var(--amber)}.viewas{background:#e8f0ff;color:#1f4ad1}.billbar svg,.viewas svg{width:18px;height:18px;flex:none}.billbar span,.viewas span{flex:1;min-width:200px}
+.tbill{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:10px}.tbillrow{display:grid;grid-template-columns:repeat(2,minmax(0,240px));gap:10px}
+@media(max-width:767px){.tbillrow,.plans{grid-template-columns:1fr}.paylist li{grid-template-columns:1fr auto}}
 </style>
 </head>
 <body>
@@ -638,16 +649,21 @@ const AUTH={mode:'in',email:''};
 function noAccessMsg(email){return `<b>Access has not been given yet</b> for <b>${esc(email)}</b>.<br>Call <a href="tel:${ACCESS_CONTACT.phone.replace(/\s/g,'')}">${ACCESS_CONTACT.phone}</a> or email <a href="mailto:${ACCESS_CONTACT.email}">${ACCESS_CONTACT.email}</a> to get complete access.`;}
 function signInScreen(msg,kind){const m=AUTH.mode;
  gateScreen(`<div class="brandmark big">🔑</div><h1>Rental Desk</h1><p class="sub">TrustKeyper · Hyderabad</p>${msg?`<p class="gatemsg ${kind||''}">${msg}</p>`:''}
- <div class="authtabs" role="tablist"><button role="tab" class="${m==='in'?'on':''}" data-amode="in">Log in</button><button role="tab" class="${m==='up'?'on':''}" data-amode="up">Sign up</button></div>
- <form id="aform" class="aform" novalidate>${m==='up'?'<label class="field"><span class="lab">Your name</span><input id="aname" autocomplete="name" placeholder="e.g. Madhav"></label>':''}
+ <div class="authtabs" role="tablist"><button role="tab" class="${m==='in'?'on':''}" data-amode="in">Log in</button><button role="tab" class="${m==='up'?'on':''}" data-amode="up">Sign up</button><button role="tab" class="${m==='ph'?'on':''}" data-amode="ph">Phone</button></div>
+ ${m==='ph'?`<form id="pform" class="aform" novalidate><label class="field"><span class="lab">Mobile number</span><div class="mrow"><span class="rs">+91</span><input id="pphone" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit number" value="${esc(AUTH.phone||'')}"></div></label>${AUTH.conf?'<label class="field"><span class="lab">6-digit code sent by SMS</span><input id="pcode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>':''}<button class="btn primary wide" type="submit">${AUTH.conf?'Verify and log in':'Send code'}</button><div id="recap"></div></form>`:`<form id="aform" class="aform" novalidate>${m==='up'?'<label class="field"><span class="lab">Your name</span><input id="aname" autocomplete="name" placeholder="e.g. Madhav"></label>':''}
  <label class="field"><span class="lab">Email</span><input id="aemail" type="email" autocomplete="email" inputmode="email" placeholder="you@trustkeyper.com" value="${esc(AUTH.email)}"></label>
  <label class="field"><span class="lab">Password</span><input id="apass" type="password" autocomplete="${m==='up'?'new-password':'current-password'}" placeholder="${m==='up'?'At least 8 characters':'Your password'}"></label>
- <button class="btn primary wide" type="submit">${m==='up'?'Create account':'Log in'}</button>${m==='in'?'<button type="button" class="btn link" id="aforgot">Forgot password?</button>':''}</form>
+ <button class="btn primary wide" type="submit">${m==='up'?'Create account':'Log in'}</button>${m==='in'?'<button type="button" class="btn link" id="aforgot">Forgot password?</button>':''}</form>`}
  <div class="ordiv"><span>or</span></div><button class="btn wide" id="gsignin">Continue with Google</button><p class="place">Only team members who have been given access can open the desk.</p>`);
- document.querySelectorAll('[data-amode]').forEach(b=>b.onclick=()=>{AUTH.email=document.getElementById('aemail').value;AUTH.mode=b.dataset.amode;signInScreen('');});
+ document.querySelectorAll('[data-amode]').forEach(b=>b.onclick=()=>{const ae=document.getElementById('aemail');if(ae)AUTH.email=ae.value;AUTH.mode=b.dataset.amode;AUTH.conf=null;signInScreen('');});
+ const pf=document.getElementById('pform');if(pf)pf.onsubmit=async ev=>{ev.preventDefault();const d=(document.getElementById('pphone').value||'').replace(/\D/g,'').slice(-10);AUTH.phone=d;const btn=pf.querySelector('[type=submit]');
+  if(AUTH.conf){const code=(document.getElementById('pcode').value||'').replace(/\D/g,'');if(code.length!==6){signInScreen('Type the 6-digit code from the SMS.','bad');return;}btn.disabled=true;btn.textContent='Checking…';try{await AUTH.conf.confirm(code);AUTH.conf=null;}catch(x){signInScreen('That code is not right or has expired. Try again.','bad');}return;}
+  if(d.length!==10){signInScreen('Type your 10-digit mobile number.','bad');return;}btn.disabled=true;btn.textContent='Sending…';
+  try{if(!AUTH.recap)AUTH.recap=new firebase.auth.RecaptchaVerifier('recap',{size:'invisible'});AUTH.conf=await firebase.auth().signInWithPhoneNumber('+91'+d,AUTH.recap);signInScreen('Code sent to +91 '+d+'.','good');}
+  catch(x){AUTH.recap=null;const c=x&&x.code||'';signInScreen(c==='auth/operation-not-allowed'?'Phone sign-in is being switched on. Use email or Google for now.':c==='auth/too-many-requests'?'Too many tries. Wait a few minutes.':'Could not send the code. Check the number and try again.','bad');}};
  document.getElementById('gsignin').onclick=()=>{const pv=new firebase.auth.GoogleAuthProvider();pv.setCustomParameters({prompt:'select_account'});firebase.auth().signInWithPopup(pv).catch(e=>{if(e&&e.code!=='auth/popup-closed-by-user')signInScreen('Sign-in did not finish. Try again.','bad');});};
  const fg=document.getElementById('aforgot');if(fg)fg.onclick=async()=>{const e=document.getElementById('aemail').value.trim();AUTH.email=e;if(!/^\S+@\S+\.\S+$/.test(e)){signInScreen('Type your email first, then tap Forgot password.','bad');return;}try{await firebase.auth().sendPasswordResetEmail(e);}catch(x){}signInScreen('If this email has an account, a reset link is on its way. Check your inbox.','good');};
- document.getElementById('aform').onsubmit=async ev=>{ev.preventDefault();const e=document.getElementById('aemail').value.trim().toLowerCase(),pw=document.getElementById('apass').value,nm=(document.getElementById('aname')?.value||'').trim();AUTH.email=e;
+ if(document.getElementById('aform'))document.getElementById('aform').onsubmit=async ev=>{ev.preventDefault();const e=document.getElementById('aemail').value.trim().toLowerCase(),pw=document.getElementById('apass').value,nm=(document.getElementById('aname')?.value||'').trim();AUTH.email=e;
   if(!/^\S+@\S+\.\S+$/.test(e)){signInScreen('Type a full email address.','bad');return;}if(pw.length<(m==='up'?8:1)){signInScreen(m==='up'?'Choose a password with at least 8 characters.':'Type your password.','bad');return;}
   const btn=ev.target.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Please wait…';
   try{if(m==='up'){const r=await firebase.auth().createUserWithEmailAndPassword(e,pw);if(nm)await r.user.updateProfile({displayName:nm});await r.user.sendEmailVerification();}else await firebase.auth().signInWithEmailAndPassword(e,pw);}
@@ -665,21 +681,24 @@ function onboardScreen(user,prof){const st={name:prof.name||user.displayName||''
   document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{st.name=document.getElementById('oname').value;st.phone=document.getElementById('ophone').value;st.lang=b.dataset.lang;draw();});
   document.getElementById('ogo').onclick=async()=>{st.name=document.getElementById('oname').value.trim();st.phone=document.getElementById('ophone').value.trim();const er=document.getElementById('oerr');
    if(!st.name){er.hidden=false;er.textContent='Type your name.';return;}if(!st.lang){er.hidden=false;er.textContent='Pick a language.';return;}
-   const data={name:st.name,phone:st.phone,lang:st.lang,email:String(user.email).toLowerCase(),updatedAt:new Date().toISOString(),...(prof.joinedAt?{}:{joinedAt:new Date().toISOString()})};
+   const data={name:st.name,phone:st.phone,lang:st.lang,email:user.email?String(user.email).toLowerCase():(user.phoneNumber||''),updatedAt:new Date().toISOString(),...(prof.joinedAt?{}:{joinedAt:new Date().toISOString()})};
    try{await fdb.doc('profiles/'+data.email).set(data,{merge:true});S.profile={...prof,...data};gateScreen('');startDesk(user);}catch(e){er.hidden=false;er.textContent='Could not save. Check your internet and try again.';}};};draw();}
-function startDesk(user){const email=String(user.email||'').toLowerCase();FB.user=user;FB.admin=ADMINS.includes(email);gateScreen('');
+function startDesk(user){const email=user.email?String(user.email).toLowerCase():(user.phoneNumber||'');FB.user=user;FB.admin=ADMINS.includes(email);gateScreen('');if(FB.admin&&!location.hash.slice(1))S.view='admin';
  const rf=document.querySelector('.railfoot');if(rf&&!document.getElementById('whoami')){const w=document.createElement('div');w.id='whoami';w.innerHTML=`<button class="btn link" data-nav="profile">${icon('circle-user-round')}<span>${esc(S.profile?.name||email)}</span></button>`;rf.after(w);}
  if(typeof render==='function'&&S.loaded)render(true);gateOpen();}
 firebase.auth().onAuthStateChanged(async user=>{
  if(!user){FB.user=null;signInScreen('');return;}
- const email=String(user.email||'').toLowerCase();
- if(!user.emailVerified){verifyScreen(user);return;}
- let ok=ADMINS.includes(email);
- if(!ok){try{ok=(await fdb.doc('access/'+email).get()).exists;}catch(e){ok=false;}}
+ const email=user.email?String(user.email).toLowerCase():(user.phoneNumber||'');
+ if(user.email&&!user.emailVerified){verifyScreen(user);return;}
+ let ok=ADMINS.includes(email),acc=null;
+ if(!ok){try{const d=await fdb.doc('access/'+email).get();ok=d.exists;acc=d.exists?d.data():null;}catch(e){ok=false;}}
  if(!ok){await firebase.auth().signOut();AUTH.mode='in';signInScreen(noAccessMsg(email),'bad');return;}
+ S.myAccess=acc;
  let prof={};try{const d=await fdb.doc('profiles/'+email).get();prof=d.exists?d.data():{};}catch(e){}
  S.profile=prof;
  if(!prof.name||!prof.lang){onboardScreen(user,prof);return;}
+ FB.user=user;FB.admin=ADMINS.includes(email);
+ if(!FB.admin&&acc&&needsBilling(acc)&&billStatus(acc).k==='overdue'){await autopayTick();if(billStatus(S.myAccess).k==='overdue'){S.modal={type:'pay',gate:true,plan:acc.plan||'monthly',method:'upi'};drawPayGate();return;}}
  startDesk(user);
 });
 const fbAssets={async upload(blob){const id='photos/'+Date.now()+'-'+Math.random().toString(36).slice(2,10)+'.'+((blob.type||'image/jpeg').split('/')[1]||'jpg').replace(/[^a-z0-9]/g,'');const ref=firebase.storage().ref(id);await ref.put(blob,{contentType:blob.type||'image/jpeg'});return {id,url:await ref.getDownloadURL(),sizeBytes:blob.size,contentType:blob.type};},async delete(id){if(String(id).startsWith('photos/'))await firebase.storage().ref(id).delete();}};
@@ -787,7 +806,7 @@ function leadWorksets(leads,now){const workLeads=leads.filter(l=>leadStage(l)!==
 
 /* ===== Desk state ===== */
 const S={sort:'newest',kindFilter:'all',leads:[],byId:new Map(),loaded:false,view:location.hash.replace('#','')||'today',tab:'incomplete',query:'',source:'all',contact:'all',drafts:{},attempt:{},toast:null,helpersOpen:false,dirtyRender:false,db:null,canWrite:true,stale:false};
-const VIEWS=['today','matches','tenants','properties','brokers','followups','helpers','profile','deleted'];
+const VIEWS=['admin','today','matches','tenants','properties','brokers','followups','helpers','profile','deleted'];
 /* UI words only. Lead data (names, notes, societies) is never translated. */
 const I18N={hi:{
 'Matches':'मैच','Tenants':'किरायेदार','Properties':'प्रॉपर्टी','Brokers':'ब्रोकर','Follow-ups':'फॉलो-अप','Help & feedback':'मदद और सुझाव',"Today's work":'आज का काम','Profile':'प्रोफ़ाइल',
@@ -872,7 +891,7 @@ function areaTokens(a){return String(a||'').split('/').map(x=>x.replace(/\(.*?\)
 function leadAreaKeys(l){const out=new Set();for(const p of String(l.society||'').split(/,|&|;|\n|\bor\b|\band\b/i)){for(const t of areaTokens(areaFor(p.trim())))out.add(t);}for(const t of areaTokens(areaFor(l.locality||'')))out.add(t);return [...out].sort();}
 function leadDoc(o){const x={...o,areaKeys:leadAreaKeys(o)};const cur=S.byId.get(o.id);if(cur){if(cur.viewers!==undefined)x.viewers=cur.viewers;else delete x.viewers;}else{x.viewers=FB.admin?[]:[String(FB.user?.email||'').toLowerCase()];}return x;}
 function clean(o){if(o&&o.id&&o.kind)o=leadDoc(o);return JSON.parse(JSON.stringify(o,(k,v)=>v===undefined?null:v));}
-async function writeLead(lead,{discussion,called}={}){
+async function writeLead(lead,{discussion,called}={}){if(S.viewAs){toast('You are viewing as someone else. Changes are off.');return false;}
  if(!S.db){toast('Not connected. Your changes are still on this card.');return false;}
  const now=new Date();
  let next={...lead,updatedAt:now.toISOString()};
@@ -896,7 +915,7 @@ async function removeLead(lead){try{await S.db.doc('leads/'+docKey(lead.id)).del
 /* ===== Rendering ===== */
 function sameCards(){try{const html=listView(computed());const want=[...html.matchAll(/data-card="([^"]+)"/g)].map(m=>m[1]).join('|');const have=[...document.querySelectorAll('#main [data-card]')].map(e=>e.dataset.card).join('|');return want===have;}catch(e){return false;}}
 function renderNav(){const c=computed();document.getElementById('nav').innerHTML=navHtml(c);}
-function navHtml(c){return [['today',"Today's work",'sun'],['matches','Matches','list-checks'],['tenants','Tenants','users'],['properties','Properties','building-2'],['brokers','Brokers','briefcase'],['followups','Follow-ups','calendar'],['helpers','Help & feedback','message-square-heart'],['profile','Profile','circle-user-round']].map(([id,label,ic])=>`<button data-nav="${id}" ${S.view===id?'aria-current="page"':''}>${icon(ic)}${label}${c.counts[id]?`<b>${c.counts[id]}</b>`:''}</button>`).join('');}
+function navHtml(c){return [['today',"Today's work",'sun'],['matches','Matches','list-checks'],['tenants','Tenants','users'],['properties','Properties','building-2'],['brokers','Brokers','briefcase'],['followups','Follow-ups','calendar'],['helpers','Help & feedback','message-square-heart'],['profile','Profile','circle-user-round'],['admin','Admin','shield-check']].filter(([id])=>id!=='admin'||FB.admin).map(([id,label,ic])=>`<button data-nav="${id}" ${S.view===id?'aria-current="page"':''}>${icon(ic)}${label}${c.counts[id]?`<b>${c.counts[id]}</b>`:''}</button>`).join('');}
 function moreCards(){const m=document.querySelector('#main [data-more]');const rows=S.pageRows||[];if(!m||S.limit>=rows.length)return;const from=S.limit;S.limit=Math.min(rows.length,S.limit+20);const html=rows.slice(from,S.limit).map((l,i)=>(from+i===S.sentFrom?sentDivider(rows.length-S.sentFrom):'')+card(l,{queue:S.tab==='incomplete',serial:from+i+1})).join('');const box=m.previousElementSibling;box.insertAdjacentHTML('beforeend',html);fixIcons();if(S.limit>=rows.length)m.remove();else watchMore();}
 let MOREOBS=null;function watchMore(){const m=document.querySelector('#main [data-more]');if(MOREOBS)MOREOBS.disconnect();if(!m)return;MOREOBS=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))(window.requestIdleCallback||setTimeout)(moreCards);},{rootMargin:'1500px'});MOREOBS.observe(m);}
 /* Keep the page still when something is pressed: remember where the pressed control (or the card in view) sits, and put it back there after any redraw. */
@@ -910,13 +929,15 @@ function render(force){
  if(!force&&ae&&ae.closest&&ae.closest('#main')&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)){S.dirtyRender=true;return;}
  S.dirtyRender=false;
  const c=computed();
- document.getElementById('nav').innerHTML=[['today',"Today's work",'sun'],['matches','Matches','list-checks'],['tenants','Tenants','users'],['properties','Properties','building-2'],['brokers','Brokers','briefcase'],['followups','Follow-ups','calendar'],['helpers','Help & feedback','message-square-heart'],['profile','Profile','circle-user-round']].map(([id,label,ic])=>`<button data-nav="${id}" ${S.view===id?'aria-current="page"':''}>${icon(ic)}${label}${c.counts[id]?`<b>${c.counts[id]}</b>`:''}</button>`).join('');
+ document.getElementById('nav').innerHTML=[['today',"Today's work",'sun'],['matches','Matches','list-checks'],['tenants','Tenants','users'],['properties','Properties','building-2'],['brokers','Brokers','briefcase'],['followups','Follow-ups','calendar'],['helpers','Help & feedback','message-square-heart'],['profile','Profile','circle-user-round'],['admin','Admin','shield-check']].filter(([id])=>id!=='admin'||FB.admin).map(([id,label,ic])=>`<button data-nav="${id}" ${S.view===id?'aria-current="page"':''}>${icon(ic)}${label}${c.counts[id]?`<b>${c.counts[id]}</b>`:''}</button>`).join('');
  const m=document.getElementById('main');
  const y=window.scrollY;const anc=takeAnchor();
  if(!S.loaded){m.innerHTML='<p class="loading">Loading your desk…</p>';}
  else if(S.view==='helpers')m.innerHTML=helpersView(c);
  else if(S.view==='today')m.innerHTML=todayView(c);
  else if(S.view==='profile')m.innerHTML=profileView();
+ else if(S.view==='admin'&&FB.admin&&!S.viewAs)m.innerHTML=adminView();
+ if(S.viewAs||billBanner())m.insertAdjacentHTML('afterbegin',viewAsBar()+billBanner());
  else m.innerHTML=listView(c);
  renderLayer();
  fixIcons();
@@ -1360,7 +1381,7 @@ function helpersInner(c){
   ${imp?`<div class="panel"><b>${esc(imp.name)}</b><p>${imp.fresh.length} new · ${imp.skipped} already on the desk · ${imp.bad} unreadable rows</p><p class="place">${imp.fresh.filter(l=>leadReadiness(l)==='ready').length} ready to match · ${imp.fresh.filter(l=>leadReadiness(l)==='call').length} need a call · ${imp.fresh.filter(l=>!phone(l.phone)).length} without a phone</p><div class="row"><button class="btn primary" data-act="doimport" ${imp.fresh.length&&!imp.busy?'':'disabled'}>${imp.busy?'Adding '+imp.done+' of '+imp.fresh.length+'…':'Add '+imp.fresh.length+' leads'}</button><button class="btn" data-act="cancelimport">Cancel</button></div></div>`:''}
  </section>
  <section class="panel"><h2>Desk at a glance</h2><div class="score">${Object.entries(bySource).map(([k,n])=>`<div><b>${n}</b>${esc(k)}</div>`).join('')}</div><div class="row"><button class="btn" data-act="backup">${icon('download')}Download backup</button><button class="btn" data-nav="deleted">${icon('trash-2')}Deleted leads (${S.leads.filter(l=>l.deletedAt).length})</button></div></section>
- ${FB.admin?teamPanel():''}
+ 
  <section class="panel"><h2>Google Sheet sync</h2><p class="place">The sales sheet "Owner and tenent data" is the golden record. Sync uses your own Google account: the first time, Google asks you to allow read access to your Drive (you may see an “app not verified” notice for this internal app — continue). The desk syncs by itself when opened within an hour of that approval; otherwise press Sync sheet now. New rows are added to the desk (old inactive rows are skipped), empty desk fields are filled from the sheet, and any changed detail waits on the lead card for Accept or Reject. Leads are matched by serial number, then phone (and flat number for owners), so nothing is duplicated. Every lead still needs a call before matching. Photos are part of the sync: homes with a Google Drive photos link get up to 10 photos copied into the desk (shrunk for fast loading).</p><p class="place">${S.sheetSync?`Last sync ${new Date(S.sheetSync.lastRun).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}: ${S.sheetSync.new} new, ${S.sheetSync.filled} filled, ${S.sheetSync.pending} changes.`:'Not synced yet.'} ${pendingCount()} leads have sheet changes to review. Photos: ${sheetPhotoTargets().length} homes still to bring in from their Drive links${S.bulk?` · ${S.bulk.finished?'last run':'importing'} ${S.bulk.done}/${S.bulk.total}, ${S.bulk.photos} photos added${S.bulk.failed?', '+S.bulk.failed+' links not opened':''}`:''}.${S.syncNeedsDrive?' <b>Auto-sync is waiting for Google access — press Sync sheet now.</b>':''}</p><div class="row"><button class="btn primary" data-act="sheetsync" ${S.syncing?'disabled':''}>${icon('refresh-cw')}${S.syncing?'Syncing…':'Sync sheet now'}</button><button class="btn" data-act="showsheet">Show leads with sheet changes</button></div></section>
  <section class="panel"><h2>Agents on duty</h2><div class="score"><div><b>11:30 pm</b>GPT · its 10 best Facebook groups</div><div><b>1:52 am</b>Claude · Facebook groups + 2 WhatsApp groups</div><div><b>5:22 am</b>Gemini · NoBroker, MagicBricks, 99acres, Housing + new places to search</div><div><b>5:30 am</b>Claude · checks, removes repeats, loads the desk, sends report</div></div>
  ${S.sources?`<p class="place">Source ranking updated ${shownDate(S.sources.updatedAt)}. Sources that bring usable leads move up and are searched first; dead ones are dropped; new ones get a 3-day trial.</p><div class="fgrid">${(S.sources.ranking||[]).slice(0,30).map(s=>`<div class="field ${s.tier==='HIGH'?'ok':''}"><span class="lab">${esc(s.type||'')} · ${esc(s.owner||'')} · ${esc(s.tier||'')}</span><span>${esc(s.name)}</span><span class="added">${s.leads7d||0} usable leads in 7 days</span></div>`).join('')}</div>${(S.sources.trial||[]).length?`<p class="place"><b>On trial:</b> ${(S.sources.trial||[]).map(t=>esc(t.name||t)).join(', ')}</p>`:''}${(S.sources.private||[]).length?`<p class="place"><b>Private groups to join (needs Aman):</b> ${(S.sources.private||[]).map(t=>esc(t.name||t)).join(', ')}</p>`:''}`:'<p class="place">The first ranking appears after tomorrow morning\'s run.</p>'}</section>
@@ -1421,6 +1442,7 @@ function renderLayer(){
  if(S.modal?.type==='callback')h+=callbackHtml();
  if(S.modal?.type==='flex')h+=flexHtml();
  if(S.modal?.type==='callwith')h+=callWithHtml();
+ if(S.modal?.type==='pay')h+=payHtml();
  if(S.modal?.type==='addhome')h+=addHomeHtml();
  if(S.modal?.type==='mremove')h+=removeHomeHtml();
  if(S.modal?.type==='deal')h+=dealHtml();
@@ -1621,6 +1643,14 @@ document.addEventListener('click',async e=>{
  if(act==='closemodal'){keepAdd();S.modal=null;renderLayer();return;}
  if(act==='fbmic'){fbStartStop();return;}
  if(act==='golead'){goLead(id);return;}
+ if(act==='viewas'){setViewAs(b.dataset.email);return;}
+ if(act==='viewasexit'){setViewAs(null);return;}
+ if(act==='payopen'){S.modal={type:'pay',plan:S.myAccess?.plan||'monthly',method:'upi'};renderLayer();return;}
+ if(act==='payplan'){S.modal.plan=b.dataset.plan;S.modal.gate?drawPayGate():renderLayer();return;}
+ if(act==='paymethod'){S.modal.method=b.dataset.k;S.modal.gate?drawPayGate():renderLayer();return;}
+ if(act==='paynow'){S.modal.auto=document.getElementById('payauto')?.checked;payNow();return;}
+ if(act==='paydone'){const g=S.modal?.gate;S.modal=null;renderLayer();if(g)location.reload();else render(true);return;}
+ if(act==='autopayoff'){if(!confirm('Turn off auto-pay? You will need to pay by hand each time.'))return;try{await fdb.doc('access/'+myKey()).update({autopay:{status:'off',setAt:new Date().toISOString()}});S.myAccess.autopay={status:'off'};toast('Auto-pay is off.');render(true);}catch(e){toast('Could not change auto-pay.');}return;}
  if(act==='dpop'){if(e.target.closest('.dx'))return;S.datePop=!S.datePop;DP.from=S.dFrom||'';DP.to=S.dTo||'';DP.month='';DP.hover='';render(true);return;}
  if(act==='dquick'){S.dFrom=b.dataset.from;S.dTo=b.dataset.to;S.datePop=false;S.limit=20;render(true);return;}
  if(act==='dpday'){const d=b.dataset.day;if(!DP.from||DP.to||d<DP.from){DP.from=d;DP.to='';}else DP.to=d;DP.hover='';redrawDatePop();return;}
@@ -1648,11 +1678,11 @@ document.addEventListener('click',async e=>{
  if(act==='fbsend'){fbSend();return;}
  if(act==='fbdropaudio'){if(FBV.audioUrl)URL.revokeObjectURL(FBV.audioUrl);FBV.audio=null;FBV.audioUrl='';fbRefresh();return;}
  if(act==='fbreply'){const fid=b.dataset.fid,v=(document.getElementById('fr-'+fid)?.value||'').trim();try{await fdb.doc('feedback/'+fid).update({reply:v,repliedAt:new Date().toISOString()});toast('Reply saved.');}catch(e){toast('Could not save the reply.');}return;}
- if(act==='teamadd'){const e=String(document.getElementById('teamemail').value||'').trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(e)){toast('Type a full email address.');return;}if(ADMINS.includes(e)){toast(e+' is an admin and always sees everything. Use a different email for a limited person.');return;}if((S.access||{})[e]){S.teamOpen=e;render(true);return;}try{await fdb.doc('access/'+e).set({email:e,limited:true,sheet:false,propAreas:[],tenAreas:[],noAreaProps:false,noAreaTenants:false,fee:0,addedBy:FB.user.email,addedAt:new Date().toISOString()});S.teamOpen=e;delete (S.teamDraft||{})[e];toast(e+' can now sign in. Pick what they see.');}catch(err){toast('Could not add. Only admins can invite.');}return;}
+ if(act==='teamadd'){let e=String(document.getElementById('teamemail').value||'').trim().toLowerCase();const dg=e.replace(/\D/g,'');if(!e.includes('@')&&(dg.length===10||(dg.length===12&&dg.startsWith('91'))))e='+91'+dg.slice(-10);if(!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(e)&&!/^\+91\d{10}$/.test(e)){toast('Type a full email address or a 10-digit phone number.');return;}if(ADMINS.includes(e)){toast(e+' is an admin and always sees everything. Use a different email for a limited person.');return;}if((S.access||{})[e]){S.teamOpen=e;render(true);return;}try{await fdb.doc('access/'+e).set({email:e,limited:true,sheet:false,propAreas:[],tenAreas:[],noAreaProps:false,noAreaTenants:false,fee:0,yearPm:BILL.yearDefault,billing:'free',addedBy:FB.user.email,addedAt:new Date().toISOString()});S.teamOpen=e;delete (S.teamDraft||{})[e];toast(e+' can now sign in. Pick what they see.');}catch(err){toast('Could not add. Only admins can invite.');}return;}
  if(act==='topen'){const e=b.dataset.email;S.teamOpen=S.teamOpen===e?null:e;delete (S.teamDraft||{})[e];render(true);return;}
  if(act==='tclose'){delete (S.teamDraft||{})[b.dataset.email];S.teamOpen=null;render(true);return;}
  if(act==='tarea'){const d=teamDraft(b.dataset.email),k=b.dataset.k,a=b.dataset.area;d[k]=d[k].includes(a)?d[k].filter(x=>x!==a):[...d[k],a];render(true);return;}
- if(act==='tsave'){const e=b.dataset.email,d=teamDraft(e);const fee=Number(String(document.getElementById('tfee-'+e)?.value||d.fee||'').replace(/\D/g,''))||0;try{await fdb.doc('access/'+e).set({email:e,limited:!!d.limited,sheet:!!d.sheet,propAreas:d.propAreas,tenAreas:d.tenAreas,noAreaProps:!!d.noAreaProps,noAreaTenants:!!d.noAreaTenants,fee,updatedAt:new Date().toISOString(),updatedBy:FB.user.email},{merge:true});delete S.teamDraft[e];S.teamOpen=null;toast('Saved. '+e+' will see the new set of leads in about a minute.');}catch(err){toast('Could not save. Try again.');}return;}
+ if(act==='tsave'){const e=b.dataset.email,d=teamDraft(e);const fee=Number(String(document.getElementById('tfee-'+e)?.value??d.fee??'').replace(/\D/g,''))||0,yearPm=Number(String(document.getElementById('tyear-'+e)?.value??d.yearPm??'').replace(/\D/g,''))||BILL.yearDefault;if(d.billing==='required'&&!fee){toast('Type the monthly price, or untick "Ask them to pay".');return;}try{await fdb.doc('access/'+e).set({email:e,limited:!!d.limited,sheet:!!d.sheet,propAreas:d.propAreas,tenAreas:d.tenAreas,noAreaProps:!!d.noAreaProps,noAreaTenants:!!d.noAreaTenants,fee,yearPm,billing:d.billing==='required'?'required':'free',updatedAt:new Date().toISOString(),updatedBy:FB.user.email},{merge:true});delete S.teamDraft[e];S.teamOpen=null;toast('Saved. '+e+' will see the new set of leads in about a minute.');}catch(err){toast('Could not save. Try again.');}return;}
  if(act==='teamdel'){const e=b.dataset.email;if(!confirm('Remove '+e+'? They will not be able to open the desk.'))return;try{await fdb.doc('access/'+e).delete();toast(e+' removed.');}catch(err){toast('Could not remove.');}return;}
  if(act==='sheetsync'){runSheetSync(true);return;}
  if(act==='showsheet'){S.view='properties';S.tab='all';S.contact='sheet';render(true);return;}
@@ -1886,24 +1916,90 @@ function visitLine(t,o){const v=visitsFor(t.id,o.id)[0];if(!v)return '';const at
  if(v.status==='cancelled')return `<p class="vline off">${icon('calendar-x')}Visit on ${when} was cancelled by the tenant</p>`;
  return `<p class="vline">${icon('calendar-check')}<span><b>Visit ${v.done?'done':'booked'}</b> · ${when} · <span class="nodict">${esc(v.name)}</span>${v.liked?` · ${v.liked==='yes'?'<b class="good">Liked it</b>':'Not for them'}`:''}</span>${!v.done?`<button class="btn link" data-act="vdone" data-id="${esc(t.id)}" data-vid="${id}">Mark visit done</button>`:''}</p>`;}
 
-async function backfillAreas(){const todo=S.leads.filter(l=>JSON.stringify(l.areaKeys||null)!==JSON.stringify(leadAreaKeys(l)));if(!todo.length)return;let b=fdb.batch(),n=0;for(const l of todo){b.update(fdb.doc('leads/'+docKey(l.id)),{areaKeys:leadAreaKeys(l)});if(++n%400===0){await b.commit();b=fdb.batch();}}await b.commit();dbg('areas backfilled',n);}
+async function backfillAreas(){const todo=(S.allLeads||S.leads).filter(l=>JSON.stringify(l.areaKeys||null)!==JSON.stringify(leadAreaKeys(l)));if(!todo.length)return;let b=fdb.batch(),n=0;for(const l of todo){b.update(fdb.doc('leads/'+docKey(l.id)),{areaKeys:leadAreaKeys(l)});if(++n%400===0){await b.commit();b=fdb.batch();}}await b.commit();dbg('areas backfilled',n);}
 /* Admin desk keeps each lead's viewers list in step with Team access (the security rules read it).
    Same logic as the leadViewers function, which takes over if the backend gets database access. */
 function viewersOf(l){return Object.entries(S.access||{}).filter(([e,a])=>seesLead(a,l)).map(([e])=>e.toLowerCase()).sort();}
 async function reconcileViewers(){if(!FB.admin||!S.loaded||!S.access||S.reconciling)return;S.reconciling=true;try{
  let b=fdb.batch(),n=0;const tv=new Map();const flush=async()=>{if(n%400===0&&n){await b.commit();b=fdb.batch();}};
- for(const l of S.leads){const v=viewersOf(l);if(l.kind==='tenant')tv.set(l.id,v);if(JSON.stringify([...(l.viewers||[])].sort())===JSON.stringify(v)&&Array.isArray(l.viewers))continue;b.update(fdb.doc('leads/'+docKey(l.id)),{viewers:v});n++;await flush();}
+ for(const l of (S.allLeads||S.leads)){const v=viewersOf(l);if(l.kind==='tenant')tv.set(l.id,v);if(JSON.stringify([...(l.viewers||[])].sort())===JSON.stringify(v)&&Array.isArray(l.viewers))continue;b.update(fdb.doc('leads/'+docKey(l.id)),{viewers:v});n++;await flush();}
  for(const x of [...(S.visits||[]).map(v=>['visits',v]),...(S.replies||[]).map(r=>['replies',r])]){const v=tv.get(x[1].tid)||[];if(JSON.stringify([...(x[1].viewers||[])].sort())===JSON.stringify(v)&&Array.isArray(x[1].viewers))continue;b.update(fdb.doc(x[0]+'/'+x[1].id),{viewers:v});n++;await flush();}
  if(n%400)await b.commit();if(n)dbg('viewers updated',n);}catch(e){dbg('viewers error',String(e).slice(0,200));}finally{S.reconciling=false;}}
 function queueReconcile(){if(!FB.admin)return;clearTimeout(S._rcT);S._rcT=setTimeout(reconcileViewers,4000);}
+/* ===== Billing (test mode now; live mode needs Razorpay keys + a small server, see docs) =====
+   access/{key}: billing 'free'|'required', fee (₹/month, incl. 18% GST), yearPm (₹/month on the yearly plan, incl. GST, default 9,751),
+   plan 'monthly'|'yearly', paidUntil 'YYYY-MM-DD', paidUntilAt (timestamp), autopay {status,method,setAt}.
+   Calendar-month periods. From 00:00 on the last day of the paid month the person is asked for the next period. */
+const BILL={gst:0.18,yearDefault:9751};
+const rs=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
+function todayIso(){return isoDay(new Date());}
+function monthEnd(d){const x=new Date(d+'T12:00:00');return isoDay(new Date(x.getFullYear(),x.getMonth()+1,0));}
+function addMonthsEnd(d,n){const x=new Date(d+'T12:00:00');return isoDay(new Date(x.getFullYear(),x.getMonth()+1+n,0));}
+function needsBilling(a){return !!a&&a.billing==='required'&&Number(a.fee)>0;}
+function billStatus(a){if(!needsBilling(a))return {k:'free',label:'No payment needed'};const t=todayIso(),pu=a.paidUntil||'';
+ if(!pu||pu<t)return {k:'overdue',label:pu?'Payment overdue since '+shownDate(pu):'Not paid yet'};
+ if(pu===t&&t===monthEnd(t))return {k:'due',label:'Next payment due tonight'};
+ return {k:'paid',label:'Paid till '+shownDate(pu)};}
+/* What the next payment covers and costs. */
+function quote(a,plan){const t=todayIso();const from=a.paidUntil&&a.paidUntil>=t?isoDay(new Date(new Date(a.paidUntil+'T12:00:00').getTime()+864e5)):t;
+ if(plan==='yearly'){const pm=Number(a.yearPm)||BILL.yearDefault;const to=addMonthsEnd(from,11);return {plan,from,to,amount:pm*12,perMonth:pm,note:'12 months'};}
+ const fee=Number(a.fee)||0;const end=monthEnd(from);const dIn=Number(end.slice(8)),dLeft=dIn-Number(from.slice(8))+1;
+ if(dLeft===dIn)return {plan,from,to:end,amount:fee,perMonth:fee,note:'1 month'};
+ const part=Math.max(1,Math.round(fee*dLeft/dIn));if(dLeft<=3){const to=addMonthsEnd(from,1);return {plan,from,to,amount:part+fee,perMonth:fee,note:dLeft+' days of this month + next month'};}
+ return {plan,from,to:end,amount:part,perMonth:fee,note:dLeft+' days of this month'};}
+const gstSplit=amt=>{const base=Math.round(amt/(1+BILL.gst)*100)/100;return {base,gst:Math.round((amt-base)*100)/100};};
+function myKey(){const u=FB.user;return u?(u.email?String(u.email).toLowerCase():u.phoneNumber||''):'';}
+async function recordPayment(q,method,auto){const key=myKey();const id=fdb.collection('payments').doc().id;const g=gstSplit(q.amount);
+ const pay={who:key,plan:q.plan,amount:q.amount,base:g.base,gst:g.gst,periodFrom:q.from,periodTo:q.to,method,auto:!!auto,mode:'test',status:'paid',createdAt:new Date().toISOString()};
+ await fdb.doc('payments/'+id).set(pay);
+ await fdb.doc('access/'+key).update({paidUntil:q.to,paidUntilAt:firebase.firestore.Timestamp.fromDate(new Date(q.to+'T23:59:59+05:30')),plan:q.plan,lastPaymentId:id,lastPaidAt:pay.createdAt});
+ S.myAccess={...S.myAccess,paidUntil:q.to,plan:q.plan};return id;}
+/* Checkout (looks like a gateway; test mode moves no money). */
+function payHtml(){const m=S.modal,a=S.myAccess||{};const plan=m.plan||a.plan||'monthly';const q=quote(a,plan);const g=gstSplit(q.amount);const yr=Number(a.yearPm)||BILL.yearDefault;
+ return `<div class="overlay"><section class="modal paym" role="dialog" aria-modal="true" aria-label="Pay for Rental Desk access" style="max-width:520px"><div class="mhead"><h2>${m.step==='done'?'Payment successful':'Pay for desk access'}</h2>${m.gate?'':`<button class="iconx" data-act="closemodal" aria-label="Close">${icon('x')}</button>`}</div>
+ ${m.step==='done'?`<div class="paydone">${icon('circle-check')}<b>${rs(m.paid.amount)} received</b><p>Access is active till <b>${shownDate(m.paid.periodTo)}</b>.${m.paid.autopay?' Auto-pay is on, so the next payment happens by itself.':''}</p><button class="btn primary wide" data-act="paydone">Continue to the desk</button></div>`:`
+ <span class="tag testmode">Test mode · no real money moves</span>
+ <div class="plans"><button type="button" class="planc ${plan==='monthly'?'on':''}" data-act="payplan" data-plan="monthly"><b>Monthly</b><span>${rs(a.fee)} / month</span><small>Pay every month</small></button>
+ <button type="button" class="planc ${plan==='yearly'?'on':''}" data-act="payplan" data-plan="yearly"><b>Yearly</b><span>${rs(yr)} / month</span><small>${rs(yr*12)} once a year</small></button></div>
+ <div class="paysum"><div><span>Covers</span><b>${shownDate(q.from)} – ${shownDate(q.to)}</b></div><div><span>${esc(q.note)}</span><b>${rs(q.amount)}</b></div><div class="muted"><span>Includes GST (18%)</span><span>${rs(g.gst)}</span></div></div>
+ <p class="lab">Pay with</p><div class="paymeth">${[['upi','UPI','smartphone'],['card','Card','credit-card'],['nb','Net banking','landmark']].map(([k,n,ic])=>`<button type="button" class="chip1 ${(m.method||'upi')===k?'on':''}" data-act="paymethod" data-k="${k}">${icon(ic)}${n}</button>`).join('')}</div>
+ <label class="chk"><input type="checkbox" id="payauto" ${m.auto!==false?'checked':''}>Turn on auto-pay (e-mandate): ${plan==='yearly'?'charge '+rs(yr*12)+' every year':'charge '+rs(a.fee)+' every month'} until I cancel</label>
+ <button class="btn primary wide" data-act="paynow">${icon('lock')}Pay ${rs(q.amount)}</button><p class="place" style="font-size:12.5px">Prices include all taxes. You can cancel auto-pay any time in Profile → Billing.</p>`}</section></div>`;}
+async function payNow(){const m=S.modal,a=S.myAccess||{};const plan=m.plan||a.plan||'monthly';const q=quote(a,plan);const auto=document.getElementById('payauto')?.checked;const btn=document.querySelector('[data-act="paynow"]');if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>Processing…';}
+ try{await new Promise(r=>setTimeout(r,900));await recordPayment(q,m.method||'upi',false);if(auto){await fdb.doc('access/'+myKey()).update({autopay:{status:'active',method:m.method||'upi',plan,setAt:new Date().toISOString()}});S.myAccess.autopay={status:'active',method:m.method||'upi',plan};}
+  S.modal={...m,step:'done',paid:{amount:q.amount,periodTo:q.to,autopay:auto}};m.gate?drawPayGate():renderLayer();}catch(e){toast('Payment could not be recorded. Try again.');if(btn){btn.disabled=false;btn.textContent='Pay '+rs(q.amount);}}}
+/* Auto-pay in test mode: when the period ends, charge the next one by itself. (Live: the gateway does this.) */
+async function autopayTick(){const a=S.myAccess;if(!a||!needsBilling(a)||a.autopay?.status!=='active')return false;const st=billStatus(a);if(st.k==='paid')return false;
+ try{const q=quote(a,a.autopay.plan||a.plan||'monthly');await recordPayment(q,a.autopay.method||'upi',true);toast('Auto-pay: '+rs(q.amount)+' paid for '+shownDate(q.from)+' – '+shownDate(q.to)+'.');return true;}catch(e){return false;}}
+function drawPayGate(){gateScreen(`<div class="paygate">${payHtml().replace(/^<div class="overlay">|<\/div>$/g,'')}</div><button class="btn link" id="pgout">Sign out</button>`);fixIcons();const o=document.getElementById('pgout');if(o)o.onclick=()=>firebase.auth().signOut().then(()=>location.reload());}
+function billBanner(){if(FB.admin||S.viewAs)return '';const a=S.myAccess;if(!a)return '';const st=billStatus(a);if(st.k!=='due')return '';return `<div class="billbar">${icon('calendar-clock')}<span><b>Next ${a.plan==='yearly'?'year':'month'}'s payment is due tonight.</b> Pay now so the desk keeps working tomorrow.</span><button class="btn primary" data-act="payopen">Pay ${rs(quote(a,a.plan||'monthly').amount)}</button></div>`;}
+function billingSection(){const a=S.myAccess;if(FB.admin)return `<section class="panel"><h2>Billing</h2><p class="place">Admins don't pay. Prices and payments for the team are in Admin.</p></section>`;if(!a||!needsBilling(a))return `<section class="panel"><h2>Billing</h2><p class="place">No payment needed for your access.</p></section>`;
+ const st=billStatus(a);const list=(S.myPayments||[]).slice(0,12);
+ return `<section class="panel billing"><h2>Billing</h2><dl class="pfmeta"><dt>Plan</dt><dd>${a.plan==='yearly'?'Yearly · '+rs(Number(a.yearPm)||BILL.yearDefault)+'/month':'Monthly · '+rs(a.fee)+'/month'}</dd><dt>Status</dt><dd><span class="tag bill ${st.k}">${esc(st.label)}</span></dd><dt>Auto-pay</dt><dd>${a.autopay?.status==='active'?'On ('+esc(String(a.autopay.method).toUpperCase())+')':'Off'}</dd></dl>
+ <div class="row"><button class="btn primary" data-act="payopen">${st.k==='paid'?'Pay in advance':'Pay now'}</button>${a.autopay?.status==='active'?'<button class="btn" data-act="autopayoff">Cancel auto-pay</button>':'<button class="btn" data-act="payopen">Turn on auto-pay</button>'}</div>
+ <h4 class="nsub" style="margin-top:14px">Payments</h4>${list.length?`<ul class="paylist">${list.map(p=>`<li><span>${shownDate(String(p.createdAt).slice(0,10))}</span><span>${shownDate(p.periodFrom)} – ${shownDate(p.periodTo)}${p.auto?' · auto-pay':''}</span><b>${rs(p.amount)}</b><span class="tag">${p.mode==='test'?'Test':'Paid'}</span></li>`).join('')}</ul>`:'<p class="place">No payments yet.</p>'}</section>`;}
+/* ===== Admin console ===== */
+function viewFilter(list){if(!S.viewAs)return list;const a=(S.access||{})[S.viewAs];if(!a)return list;if(needsBilling(a)&&billStatus(a).k==='overdue')return [];return list.filter(l=>seesLead(a,l));}
+function setViewAs(key){S.viewAs=key||null;S.leads=viewFilter(S.allLeads||S.leads);S._mc=null;S.view=key?'today':'admin';location.hash=S.view;render(true);window.scrollTo(0,0);}
+function viewAsBar(){if(!S.viewAs)return '';const a=(S.access||{})[S.viewAs]||{};const nm=(S.profiles||{})[S.viewAs]?.name;return `<div class="viewas">${icon('eye')}<span>Viewing as <b>${esc(nm||S.viewAs)}</b> · they see ${S.leads.length} leads${needsBilling(a)&&billStatus(a).k==='overdue'?' (nothing until they pay)':''}. Changes are off.</span><button class="btn" data-act="viewasexit">Back to admin view</button></div>`;}
+function adminView(){const keys=Object.keys(S.access||{}).sort();const rows=keys.map(k=>({k,a:accOf(k),p:(S.profiles||{})[k]||{}}));const t=todayIso();
+ const paying=rows.filter(r=>needsBilling(r.a));const mrr=paying.reduce((n,r)=>n+(r.a.plan==='yearly'?(Number(r.a.yearPm)||BILL.yearDefault):Number(r.a.fee)),0);
+ const overdue=paying.filter(r=>billStatus(r.a).k==='overdue').length,due=paying.filter(r=>billStatus(r.a).k==='due').length;const pays=(S.allPayments||[]).slice(0,15);
+ const monthIn=(S.allPayments||[]).filter(p=>String(p.createdAt).slice(0,7)===t.slice(0,7)).reduce((n,p)=>n+Number(p.amount||0),0);
+ const card=(n,l,s)=>`<div class="metric"><small>${l}</small><b>${n}</b>${s?`<span>${s}</span>`:''}</div>`;
+ return `<div class="head"><div><h1>Admin</h1><p class="sub">Who can open the desk, what each person sees, what they pay, and a preview of their screen.</p></div></div>
+ <div class="metrics">${card(keys.length,'People with access',paying.length+' paying')}${card(rs(mrr),'Monthly revenue','from active plans')}${card(rs(monthIn),'Collected this month',(S.allPayments||[]).length+' payments in total')}${card(overdue+due,'Need attention',overdue+' overdue · '+due+' due tonight')}</div>
+ ${teamPanel()}
+ <section class="panel"><h2>Recent payments</h2>${pays.length?`<ul class="paylist">${pays.map(p=>`<li><span class="nodict">${esc((S.profiles||{})[p.who]?.name||p.who)}</span><span>${shownDate(p.periodFrom)} – ${shownDate(p.periodTo)} · ${p.plan}${p.auto?' · auto-pay':''}</span><b>${rs(p.amount)}</b><span class="tag">${p.mode==='test'?'Test':'Live'}</span></li>`).join('')}</ul>`:'<p class="place">No payments yet.</p>'}</section>
+ <section class="panel"><h2>Payment gateway</h2><p class="place">Now in <b>test mode</b>: the checkout, plans, auto-pay and reminders all work, but no money moves. Going live needs a Razorpay account (KYC by you), its keys, and a small server step that confirms each payment with Razorpay before access is extended.</p></section>`;}
 /* ===== Team access: the command center for who sees what, and what they pay ===== */
 function allAreas(){const m=new Map();const add=(t,k)=>{const e=m.get(t)||{owner:0,tenant:0};if(k)e[k]++;m.set(t,e);};for(const v of Object.values(AREA_MAP))areaTokens(v).forEach(t=>add(t));for(const v of Object.values(S.societyAreas||{}))areaTokens(v).forEach(t=>add(t));for(const l of S.leads){if(l.deletedAt)continue;for(const t of leadAreaKeys(l))add(t,l.kind==='owner'?'owner':'tenant');}return [...m.entries()].sort((a,b)=>(b[1].owner+b[1].tenant)-(a[1].owner+a[1].tenant)||a[0].localeCompare(b[0]));}
 function accOf(e){return (S.access||{})[e]||{email:e};}
-function teamDraft(e){S.teamDraft=S.teamDraft||{};if(!S.teamDraft[e]){const a=accOf(e);S.teamDraft[e]={limited:!!a.limited,sheet:!!a.sheet,propAreas:[...(a.propAreas||[])],tenAreas:[...(a.tenAreas||[])],noAreaProps:!!a.noAreaProps,noAreaTenants:!!a.noAreaTenants,fee:a.fee||''};}return S.teamDraft[e];}
+function teamDraft(e){S.teamDraft=S.teamDraft||{};if(!S.teamDraft[e]){const a=accOf(e);S.teamDraft[e]={limited:!!a.limited,sheet:!!a.sheet,propAreas:[...(a.propAreas||[])],tenAreas:[...(a.tenAreas||[])],noAreaProps:!!a.noAreaProps,noAreaTenants:!!a.noAreaTenants,fee:a.fee||'',yearPm:a.yearPm||BILL.yearDefault,billing:a.billing||'free'};}return S.teamDraft[e];}
 function seesLead(a,l){if(!a.limited)return true;const sheet=l.source==='Excel reference'||l.sheetRow!=null;if(sheet&&!a.sheet)return false;const k=leadAreaKeys(l),own=l.kind==='owner';if(!k.length)return own?!!a.noAreaProps:!!a.noAreaTenants;const al=(own?a.propAreas:a.tenAreas)||[];return k.some(x=>al.includes(x));}
 function teamSummary(a){if(!a.limited)return '<span class="tag">Full access</span>';const parts=[a.sheet?'Sheet leads shown':'Sheet leads hidden',(a.propAreas||[]).length?'Properties: '+a.propAreas.join(', '):'No property areas',(a.tenAreas||[]).length?'Tenants: '+a.tenAreas.join(', '):'No tenant areas'];return parts.map(x=>`<span class="tag">${esc(x)}</span>`).join('');}
 function areaClash(e,d){const out=[];for(const [k,label] of [['propAreas','properties'],['tenAreas','tenants']])for(const ar of d[k]){const others=Object.entries(S.access||{}).filter(([x,a])=>x!==e&&a.limited&&(a[k]||[]).includes(ar)).map(([x])=>x);if(others.length)out.push(`<b>${esc(ar)}</b> (${label}) is also given to ${others.map(esc).join(', ')}`);}return out;}
-function teamPanel(){const list=Object.keys(S.access||{}).sort();const total=list.reduce((n,e)=>n+(Number(accOf(e).fee)||0),0);const areas=allAreas();const live=S.leads.filter(l=>!l.deletedAt&&l.status!=='closed');
+function teamPanel(){const list=Object.keys(S.access||{}).sort();const total=list.reduce((n,e)=>{const a=accOf(e);return n+(needsBilling(a)?(a.plan==='yearly'?(Number(a.yearPm)||BILL.yearDefault):Number(a.fee)):0);},0);const areas=allAreas();const live=S.leads.filter(l=>!l.deletedAt&&l.status!=='closed');
  const editor=e=>{const d=teamDraft(e);const chips=(k,kind)=>`<div class="tachips">${areas.map(([t,c])=>`<button type="button" class="chip1 ${d[k].includes(t)?'on':''}" data-act="tarea" data-email="${esc(e)}" data-k="${k}" data-area="${esc(t)}">${esc(t)}${c[kind]?`<small>${c[kind]}</small>`:''}</button>`).join('')}</div>`;
   const props=live.filter(l=>l.kind==='owner'&&seesLead(d,l)).length,tens=live.filter(l=>l.kind==='tenant'&&seesLead(d,l)).length;const clash=d.limited?areaClash(e,d):[];
   return `<div class="tedit"><label class="chk big"><input type="checkbox" data-tset="limited" data-email="${esc(e)}" ${d.limited?'':'checked'}>Full access: sees every lead</label>
@@ -1912,11 +2008,14 @@ function teamPanel(){const list=Object.keys(S.access||{}).sort();const total=lis
   <p class="lab">${icon('users')}Tenant areas they can see</p>${chips('tenAreas','tenant')}<label class="chk"><input type="checkbox" data-tset="noAreaTenants" data-email="${esc(e)}" ${d.noAreaTenants?'checked':''}>Also tenants with no area set</label>
   ${clash.length?`<div class="tawarn">${icon('alert-triangle')}<div>${clash.join('<br>')}<br><small>You can still save. Both people will see these leads.</small></div></div>`:''}`:''}
   <p class="tcount">${icon('eye')}With these settings they see <b>${props}</b> active properties and <b>${tens}</b> active tenants.</p>
-  <div class="field money tfee"><label class="lab" for="tfee-${esc(e)}">${icon('indian-rupee')}Monthly price</label><div class="mrow"><span class="rs">₹</span><input id="tfee-${esc(e)}" inputmode="numeric" data-tfee="${esc(e)}" value="${d.fee?Number(d.fee).toLocaleString('en-IN'):''}" placeholder="0"><span class="unit">/ month</span></div></div>
+  <div class="tbill"><label class="chk big"><input type="checkbox" data-tset="billing" data-email="${esc(e)}" ${d.billing==='required'?'checked':''}>Ask them to pay to use the desk</label>
+  ${d.billing==='required'?`<div class="tbillrow"><div class="field money"><label class="lab" for="tfee-${esc(e)}">${icon('indian-rupee')}Monthly plan</label><div class="mrow"><span class="rs">₹</span><input id="tfee-${esc(e)}" inputmode="numeric" data-tfee="${esc(e)}" value="${d.fee?Number(d.fee).toLocaleString('en-IN'):''}" placeholder="e.g. 999"><span class="unit">/ month</span></div></div>
+  <div class="field money"><label class="lab" for="tyear-${esc(e)}">${icon('indian-rupee')}Yearly plan</label><div class="mrow"><span class="rs">₹</span><input id="tyear-${esc(e)}" inputmode="numeric" data-tyear="${esc(e)}" value="${Number(d.yearPm||BILL.yearDefault).toLocaleString('en-IN')}"><span class="unit">/ month</span></div></div></div>
+  <p class="place" style="font-size:13px">Prices include GST. Yearly is charged once: ${rs((Number(d.yearPm)||BILL.yearDefault)*12)}. They are asked for the next payment from midnight on the last day of each paid period.</p>`:''}</div>
   <div class="row"><button class="btn primary" data-act="tsave" data-email="${esc(e)}">${icon('check')}Save</button><button class="btn" data-act="tclose" data-email="${esc(e)}">Cancel</button><button class="btn link warn" data-act="teamdel" data-email="${esc(e)}">Remove access</button></div></div>`;};
  return `<section class="panel teampanel"><div class="dhead"><div><h2>Team access</h2><p class="place">Who can open the desk, which leads each person sees, and what they pay every month. Admins (info@ and Aman) always see everything.</p></div><div class="ttotal"><small>Monthly total</small><b>₹${total.toLocaleString('en-IN')}</b></div></div>
- <ul class="team">${list.map(e=>{const a=accOf(e),nm=(S.profiles||{})[e]?.name,open=S.teamOpen===e;return `<li class="tmem ${open?'open':''}"><div class="thead"><div><b>${esc(nm||e)}</b>${nm?`<small>${esc(e)}</small>`:''}<div class="tsum">${ADMINS.includes(e)?'<span class="tag">Area limits do not apply to admins. To test limits, invite a different email.</span>':teamSummary(a)}</div></div><div class="tright">${ADMINS.includes(e)?'<span class="tag">Admin · always sees everything</span>':`<span class="tfee">${a.fee?'₹'+Number(a.fee).toLocaleString('en-IN')+'/month':'No price set'}</span><button class="btn" data-act="topen" data-email="${esc(e)}">${open?'Close':'Edit access'}</button>`}</div></div>${open&&!ADMINS.includes(e)?editor(e):''}</li>`;}).join('')||'<li class="place">No one invited yet.</li>'}</ul>
- <div class="row"><input id="teamemail" class="filter" type="email" placeholder="name@gmail.com" aria-label="Email to invite"><button class="btn primary" data-act="teamadd">${icon('user-plus')}Invite</button></div><p class="place">New people start with no leads. Pick their areas, then Save.</p></section>`;}
+ <ul class="team">${list.map(e=>{const a=accOf(e),nm=(S.profiles||{})[e]?.name,open=S.teamOpen===e;return `<li class="tmem ${open?'open':''}"><div class="thead"><div><b>${esc(nm||e)}</b>${nm?`<small>${esc(e)}</small>`:''}<div class="tsum">${ADMINS.includes(e)?'<span class="tag">Area limits do not apply to admins. To test limits, invite a different email.</span>':teamSummary(a)}</div></div><div class="tright">${ADMINS.includes(e)?'<span class="tag">Admin · always sees everything</span>':`<span class="tag bill ${billStatus(a).k}">${needsBilling(a)?(a.plan==='yearly'?rs(Number(a.yearPm)||BILL.yearDefault)+'/mo yearly':rs(a.fee)+'/month')+' · '+esc(billStatus(a).label):'Free'}</span><button class="btn" data-act="viewas" data-email="${esc(e)}" title="See the desk as this person sees it">${icon('eye')}View as</button><button class="btn" data-act="topen" data-email="${esc(e)}">${open?'Close':'Edit access'}</button>`}</div></div>${open&&!ADMINS.includes(e)?editor(e):''}</li>`;}).join('')||'<li class="place">No one invited yet.</li>'}</ul>
+ <div class="row"><input id="teamemail" class="filter" placeholder="Email or 10-digit phone" aria-label="Email or phone to invite"><button class="btn primary" data-act="teamadd">${icon('user-plus')}Invite</button></div><p class="place">Invite by email or phone number. New people start with no leads: pick their areas and price, then Save. They pay when they first sign in.</p></section>`;}
 /* ===== Call with AI listening =====
    1) "Call" asks every time which app to use (WhatsApp app, WhatsApp Web, phone link, other).
    2) The call panel hears the call: your microphone, plus (optionally) the other person's voice from the WhatsApp tab or screen audio.
@@ -2019,8 +2118,8 @@ function profileView(){const p=S.profile||{},u=FB.user;const how=(u?.providerDat
  <div class="fgrid"><label class="field"><span class="lab">${tr('Your name')}</span><input id="pfname" value="${esc(p.name||'')}"></label><label class="field"><span class="lab">${tr('Your phone number')}</span><input id="pfphone" inputmode="tel" value="${esc(p.phone||'')}"></label></div>
  <p class="lab qlab">${tr('Language')}</p><div class="langpick">${LANGS.map(([k,n,en])=>`<button type="button" class="langbtn ${uiLang()===k?'on':''}" data-act="pflang" data-lang="${k}"><b>${n}</b>${k==='en'?'':`<small>${en}</small>`}</button>`).join('')}</div>
  <dl class="pfmeta"><dt>${tr('Email')}</dt><dd class="nodict">${esc(u?.email||'')}</dd><dt>${tr('Signed in with')}</dt><dd>${esc(how)}</dd>${p.joinedAt?`<dt>Joined</dt><dd>${shownDate(p.joinedAt.slice(0,10))}</dd>`:''}<dt>Access</dt><dd>${FB.admin?'Admin':'Team member'}</dd></dl>
- <div class="row"><button class="btn primary" data-act="pfsave">${tr('Save changes')}</button>${(u?.providerData||[]).some(x=>x.providerId==='password')?'<button class="btn" data-act="pfreset">Change password</button>':''}<button class="btn warn" data-act="signout">${icon('log-out')}${tr('Sign out')}</button></div></section>`;}
-async function saveProfile(patch){const e=String(FB.user?.email||'').toLowerCase();if(!e)return false;const data={...patch,email:e,updatedAt:new Date().toISOString()};try{await fdb.doc('profiles/'+e).set(data,{merge:true});S.profile={...(S.profile||{}),...data};const w=document.querySelector('#whoami span');if(w&&data.name)w.textContent=data.name;return true;}catch(x){toast('Could not save. Check your internet.');return false;}}
+ <div class="row"><button class="btn primary" data-act="pfsave">${tr('Save changes')}</button>${(u?.providerData||[]).some(x=>x.providerId==='password')?'<button class="btn" data-act="pfreset">Change password</button>':''}<button class="btn warn" data-act="signout">${icon('log-out')}${tr('Sign out')}</button></div></section>${billingSection()}`;}
+async function saveProfile(patch){const e=myKey();if(!e)return false;const data={...patch,email:e,updatedAt:new Date().toISOString()};try{await fdb.doc('profiles/'+e).set(data,{merge:true});S.profile={...(S.profile||{}),...data};const w=document.querySelector('#whoami span');if(w&&data.name)w.textContent=data.name;return true;}catch(x){toast('Could not save. Check your internet.');return false;}}
 /* ===== Voice notes for the call box ===== */
 const DICT={rec:null,id:null};
 function dictate(id,btn){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Voice typing works in Chrome. Open the desk in Chrome to speak your notes.');return;}
@@ -2081,8 +2180,9 @@ document.addEventListener('input',e=>{
 document.addEventListener('input',e=>{if(e.target.id!=='flex-n'||S.modal?.type!=='flex')return;const l=S.byId.get(S.modal.id);const amt=l&&money(draftOf(l).details.amountText);const n=Number(e.target.value.replace(/[^\d]/g,''))||0;const el=document.getElementById('flex-range');if(el&&amt)el.innerHTML='Range: <b>₹'+Math.max(0,amt-n*1000).toLocaleString('en-IN')+' – ₹'+(amt+n*1000).toLocaleString('en-IN')+'</b>';document.querySelectorAll('[data-act=flexpick]').forEach(b=>b.classList.toggle('on',+b.dataset.val===n));});
 document.addEventListener('mouseover',e=>{const d=e.target.closest?.('.dpd');if(!d||!DP.from||DP.to)return;if(DP.hover===d.dataset.day)return;DP.hover=d.dataset.day;document.querySelectorAll('.datepop .dpd').forEach(x=>{const v=x.dataset.day;x.classList.toggle('e',v===DP.hover&&v>DP.from);x.classList.toggle('in',v>DP.from&&v<DP.hover);});});
 document.addEventListener('change',e=>{
- if(e.target.dataset?.tset){const d=teamDraft(e.target.dataset.email),k=e.target.dataset.tset;d[k]=k==='limited'?!e.target.checked:e.target.checked;const f=document.getElementById('tfee-'+e.target.dataset.email);if(f)d.fee=f.value.replace(/\D/g,'');render(true);return;}
+ if(e.target.dataset?.tset){const d=teamDraft(e.target.dataset.email),k=e.target.dataset.tset;d[k]=k==='limited'?!e.target.checked:k==='billing'?(e.target.checked?'required':'free'):e.target.checked;const f=document.getElementById('tfee-'+e.target.dataset.email);if(f)d.fee=f.value.replace(/\D/g,'');const y=document.getElementById('tyear-'+e.target.dataset.email);if(y)d.yearPm=y.value.replace(/\D/g,'');render(true);return;}
  if(e.target.dataset?.tfee){teamDraft(e.target.dataset.tfee).fee=e.target.value.replace(/\D/g,'');return;}
+ if(e.target.dataset?.tyear){teamDraft(e.target.dataset.tyear).yearPm=e.target.value.replace(/\D/g,'');return;}
  if(e.target.matches?.('select[data-about]')){const id=e.target.dataset.about;S.about=S.about||{};S.about[id]=e.target.value;const l=S.byId.get(id);if(l&&String(draftOf(l).discussion||'').trim()){S.drafts[id]={...draftOf(l),discussionBase:'\u0000'};queueSave(l);}return;}
  const t=e.target;
  if(t.id==='fbshare'){S.fbShare=t.checked;return;}
@@ -2138,6 +2238,8 @@ render(true);
  const mine=c=>FB.admin?fdb.collection(c):fdb.collection(c).where('viewers','array-contains',String(FB.user.email).toLowerCase());
  mine('visits').onSnapshot(s=>{S.visits=s.docs.map(d=>({id:d.id,...d.data()}));foldVisits();queueReconcile();if(S.loaded)render();},()=>{});
  mine('replies').onSnapshot(s=>{S.replies=s.docs.map(d=>({id:d.id,...d.data()}));foldVisits();queueReconcile();if(S.loaded)render();},()=>{});
+ if(FB.admin){fdb.collection('payments').orderBy('createdAt','desc').limit(200).onSnapshot(s=>{S.allPayments=s.docs.map(d=>d.data());if(S.view==='admin')render();},()=>{});fdb.doc('config/billing').get().then(d=>{if(!d.exists)fdb.doc('config/billing').set({mode:'test',gst:0.18,yearDefault:BILL.yearDefault,createdAt:new Date().toISOString()});}).catch(()=>{});}
+ else{fdb.doc('access/'+myKey()).onSnapshot(d=>{S.myAccess=d.exists?d.data():null;render();},()=>{});fdb.collection('payments').where('who','==',myKey()).onSnapshot(s=>{S.myPayments=s.docs.map(d=>d.data()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));if(S.view==='profile')render();},()=>{});}
  if(FB.admin){fdb.collection('access').onSnapshot(s=>{S.team=s.docs.map(d=>d.id).sort();S.access=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));queueReconcile();if(S.view==='helpers')render();},()=>{});fdb.collection('profiles').onSnapshot(s=>{S.profiles=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));if(S.view==='helpers')render();},()=>{});}
  db.doc('config/societyAreas').onSnapshot(s=>{S.societyAreas=s.exists?s.data():{};},()=>{});
  db.doc('config/online').onSnapshot({includeMetadataChanges:true},s=>{if(!s.metadata.fromCache){clearTimeout(timer);conn.textContent='Saved online';dot.classList.remove('warn');}},()=>{});
@@ -2145,7 +2247,7 @@ render(true);
  (FB.admin?db.collection('leads'):db.collection('leads').where('viewers','array-contains',String(FB.user.email).toLowerCase())).onSnapshot(snap=>{
   if(!snap.metadata.fromCache){clearTimeout(timer);conn.textContent='Saved online';dot.classList.remove('warn');}
   const first=!S.loaded,chg=first?[]:snap.docChanges();
-  S.leads=snap.docs.map(d=>d.data()).filter(x=>x&&x.id);
+  S.allLeads=snap.docs.map(d=>d.data()).filter(x=>x&&x.id);S.leads=viewFilter(S.allLeads);
   S.byId=new Map(S.leads.map(l=>[l.id,l]));
   for(const id of Object.keys(S.drafts)){const l=S.byId.get(id);if(l&&!anyChange(l)&&!SAVE.pending.has(id))delete S.drafts[id];}
   S.loaded=true;setTimeout(()=>foldVisits(),500);queueReconcile();if(FB.admin&&!S.backfilled){S.backfilled=true;setTimeout(backfillAreas,3000);}maybeAutoSync();

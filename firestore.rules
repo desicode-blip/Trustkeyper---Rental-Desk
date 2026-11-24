@@ -1,19 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function email() { return request.auth.token.email.lower(); }
-    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function email() { return request.auth.token.get('email', '').lower(); }
+    function phone() { return request.auth.token.get('phone_number', ''); }
+    // A person is keyed by their email, or by phone (+91…) when they signed in with a phone number.
+    function me() { return email() != '' ? email() : phone(); }
+    function signedIn() { return request.auth != null && (request.auth.token.get('email_verified', false) == true || phone() != ''); }
     function isAdmin() { return signedIn() && email() in ['info@trustkeyper.com', 'amanmaheshwari900@gmail.com']; }
-    function isMember() { return isAdmin() || (signedIn() && exists(/databases/$(database)/documents/access/$(email()))); }
+    function accessDoc() { return get(/databases/$(database)/documents/access/$(me())).data; }
+    function isListed() { return signedIn() && me() != '' && exists(/databases/$(database)/documents/access/$(me())); }
+    // Paid: free members always; billed members only until their paid-up date.
+    function paid() { return accessDoc().get('billing', 'free') != 'required' || accessDoc().get('paidUntilAt', timestamp.value(0)) > request.time; }
+    function isMember() { return isAdmin() || (isListed() && paid()); }
+    function testBilling() { return get(/databases/$(database)/documents/config/billing).data.get('mode', '') == 'test'; }
 
     // Team list: members can check it, only admins change it.
-    match /access/{who} { allow read: if isAdmin() || (signedIn() && who == email()); allow write: if isAdmin(); }
+    match /access/{who} {
+      allow read: if isAdmin() || (signedIn() && who == me());
+      allow write: if isAdmin();
+      // Test-mode checkout: a person may mark their own access as paid. Live payments will be confirmed by the server instead.
+      allow update: if isListed() && who == me() && testBilling()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paidUntil','paidUntilAt','plan','autopay','lastPaymentId','lastPaidAt']);
+    }
+    match /payments/{id} {
+      allow read: if isAdmin() || (isListed() && resource.data.who == me());
+      allow create: if isAdmin() || (isListed() && testBilling() && request.resource.data.who == me()
+        && request.resource.data.mode == 'test' && request.resource.data.status == 'paid');
+      allow update, delete: if isAdmin();
+    }
     // A lead is visible to admins and to the people listed in its viewers (kept by the leadViewers function).
-    function sees(d) { return isAdmin() || (isMember() && email() in d.get('viewers', [])); }
+    function sees(d) { return isAdmin() || (isMember() && me() in d.get('viewers', [])); }
     // Profiles: each member reads and writes only their own; admins read all.
     match /profiles/{who} {
-      allow read: if isAdmin() || (isMember() && who == email());
-      allow write: if isMember() && who == email() && request.resource.data.email == email();
+      allow read: if isAdmin() || (isListed() && who == me());
+      allow write: if isListed() && who == me() && request.resource.data.email == me();
     }
     // Homes shared with tenants: anyone with the exact link can open one; nobody can list them.
     match /shares/{id} { allow get: if true; allow list, write: if isMember(); }
@@ -48,16 +68,16 @@ service cloud.firestore {
     // Desk data
     match /leads/{id} {
       allow read: if sees(resource.data);
-      allow create: if isAdmin() || (isMember() && request.resource.data.get('viewers', []) == [email()]);
+      allow create: if isAdmin() || (isMember() && request.resource.data.get('viewers', []) == [me()]);
       allow update: if isAdmin() || (sees(resource.data) && request.resource.data.get('viewers', []) == resource.data.get('viewers', []));
       allow delete: if isAdmin();
     }
-    match /config/{id} { allow read, write: if isMember(); }
+    match /config/{id} { allow read: if isMember() || (isListed() && id == 'billing'); allow write: if isAdmin() || (isMember() && id != 'billing'); }
     // Feedback: each person writes and reads their own; admins read all and set status/reply.
     match /feedback/{id} {
-      allow create: if isMember() && request.resource.data.by == email() && request.resource.data.status == 'new';
-      allow read: if isAdmin() || (isMember() && (resource.data.by == email() || resource.data.shared == true));
-      allow update: if isAdmin() || (isMember() && resource.data.by == email() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['shared']));
+      allow create: if isMember() && request.resource.data.by == me() && request.resource.data.status == 'new';
+      allow read: if isAdmin() || (isMember() && (resource.data.by == me() || resource.data.shared == true));
+      allow update: if isAdmin() || (isMember() && resource.data.by == me() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['shared']));
       allow delete: if isAdmin();
     }
   }
