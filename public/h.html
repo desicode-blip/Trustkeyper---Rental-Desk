@@ -72,7 +72,7 @@ function rentLine(l){if(!l.rent)return 'Rent on request';const r=money(l.rent);c
 const title=l=>[l.r,l.t].filter(Boolean).join(' · ');
 const feeText=l=>l.fee?money(l.fee):'Free';
 /* Visit windows the owner/broker gave (e.g. 10 am–1 pm, 4–8 pm). Customers book at least 1 hour ahead, on a 30-minute grid. */
-function windows(l){const w=(l.win&&l.win.length)?l.win:[[parseInt(l.vf,10)||7,parseInt(l.vt,10)||23]];return w;}
+function windows(l){const w=(l.win&&l.win.length)?l.win.map(x=>Array.isArray(x)?x:String(x).split('-').map(Number)):[[parseInt(l.vf,10)||7,parseInt(l.vt,10)||23]];return w;}
 function slots(day){const l=L(),now=Date.now()+3600e3,out=[];for(const [f,t] of windows(l)){for(let m=f*60;m<=t*60;m+=30){const d=new Date(day);d.setHours(0,m,0,0);if(d.getTime()>=now)out.push(d);}}return out;}
 const days=()=>{const a=[];const t=new Date();t.setHours(0,0,0,0);for(let i=0;i<7;i++){const d=new Date(t);d.setDate(t.getDate()+i);a.push(d);}return a;};
 const steps=[['Book a visit','Pick a day and time that suits you.'],['Visit the house','See it with the broker.'],['Pay a token to block it','Liked it? Once the token is paid, we stop showing the house to others.'],['Rent agreement is made','We draft it for you and the owner.'],['Sign the agreement','Online, from your phone.'],['Pay and collect the keys',"Security deposit, brokerage fee (if any) and 1 month's rent."]];
@@ -134,7 +134,7 @@ function confirmSheet(t,sub,yes,no,fn){const d=document.createElement('div');d.c
 function alertBox(t){confirmSheet(t,'','OK','Close',()=>{});}
 backBtn.onclick=()=>{S.view='page';draw();scrollTo(0,0);};
 (async()=>{if(!sid){app.innerHTML='<div class="load">This link is not complete. Ask your broker to send it again.</div>';return;}
- try{const d=await db.collection('shares').doc(sid).get();if(!d.exists||d.data().off){app.innerHTML='<div class="load">This property is no longer listed.</div>';return;}
+ try{const d=await db.collection('shares').doc(sid).get();if(!d.exists||d.data().off){app.innerHTML='<div class="load">This property is no longer listed.</div>';return;}if(!/[?&]old=1/.test(location.search)){const b32=t=>{const abc='abcdefghijklmnopqrstuvwxyz234567';let out='',v=0,bits=0;for(const x of new TextEncoder().encode(t)){v=(v<<8)|x;bits+=8;while(bits>=5){out+=abc[(v>>(bits-5))&31];bits-=5;}v&=(1<<bits)-1;}if(bits>0)out+=abc[(v<<(5-bits))&31];return out;};location.replace('/t/?s='+sid+'#p-'+b32(JSON.stringify(d.data().p)));return;}
   S.share=d.data();S.share.not=!!store.get('tk.n.'+sid);document.title='TrustKeyper · '+title(L());
   const mine=store.get('tk.v.'+sid);if(mine&&mine.id){try{const v=await db.collection('visits').doc(mine.id).get();if(v.exists)S.visit={id:v.id,...v.data()};}catch(e){}}
   draw();}catch(e){app.innerHTML='<div class="load">Could not open this home. Check your internet and try again.</div>';}})();

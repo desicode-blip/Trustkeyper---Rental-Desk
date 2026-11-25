@@ -42,7 +42,7 @@ service cloud.firestore {
       allow get: if true;
       allow list: if isAdmin() || sees(resource.data);
       allow create: if isMember() || (
-        request.resource.data.keys().hasOnly(['sid','tid','pid','at','name','phone','code','status','createdAt'])
+        request.resource.data.keys().hasOnly(['sid','tid','pid','at','name','phone','code','status','createdAt','src'])
         && request.resource.data.status == 'booked'
         && request.resource.data.code is string && request.resource.data.code.size() == 4
         && request.resource.data.name is string && request.resource.data.name.size() <= 80
@@ -51,7 +51,7 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/shares/$(request.resource.data.sid)).data.tid == request.resource.data.tid
         && get(/databases/$(database)/documents/shares/$(request.resource.data.sid)).data.pid == request.resource.data.pid);
       allow update: if isAdmin() || (sees(resource.data) && request.resource.data.get('viewers', []) == resource.data.get('viewers', [])) || (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','liked','updatedAt'])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','liked','updatedAt','step','tokenPaid','docsSent','detailsSent'])
         && resource.data.status in ['booked','visited']
         && request.resource.data.status in ['cancelled','visited','booked']
         && (!('liked' in request.resource.data) || request.resource.data.liked in ['yes','no']));

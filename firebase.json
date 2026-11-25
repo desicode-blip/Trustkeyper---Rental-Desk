@@ -22,9 +22,22 @@
             "value": "same-origin"
           }
         ]
+      },
+      {
+        "source": "/t/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
       }
     ],
     "rewrites": [
+      {
+        "source": "/t/**",
+        "destination": "/t/index.html"
+      },
       {
         "source": "/h/**",
         "destination": "/h.html"

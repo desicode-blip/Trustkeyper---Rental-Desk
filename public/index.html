@@ -1669,17 +1669,19 @@ document.addEventListener('click',async e=>{
  if(act==='callfillall'){fillFromCall(Object.keys(CALL.found));return;}
  if(act==='callnotes'){const cl=S.byId.get(CALL.id);if(!cl)return;const d=draftOf(cl);const said=CALL.lines.join(' ');const picked=Object.values(CALL.found).map(f=>f.label+': '+f.show).join(' · ');d.discussion=[String(d.discussion||'').trim(),picked?'From the call: '+picked+'.':'',said].filter(Boolean).join('\n');renderCard(cl.id);queueSave(cl);document.getElementById('dn-'+cl.id)?.scrollIntoView({block:'center',behavior:'smooth'});toast('Added to today\'s call notes. Set the next follow-up to finish.');return;}
  if(act==='vdone'){const v=(S.visits||[]).find(x=>x.id===b.dataset.vid);if(!v)return;const c=prompt('Type the 4-digit visit code the tenant tells you after the visit.');if(c==null)return;if(String(c).trim()!==String(v.code)){toast('That code does not match. Ask the tenant for the code on their visit page.');return;}try{await fdb.doc('visits/'+v.id).update({done:true,status:'visited',doneAt:new Date().toISOString(),doneBy:String(FB.user?.email||'')});toast('Visit marked done.');}catch(e){toast('Could not save. Check your internet.');}return;}
- if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;S.modal={type:'wa',tid:t.id,pid:o.id};renderLayer();return;}
- if(act==='wago'){const m=S.modal,t=S.byId.get(m.tid),o=S.byId.get(m.pid);if(!t||!o)return;const k=b.dataset.k;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;
-  const linkP=makeShare(t,o);const textP=linkP.then(link=>homeShareText(o,link,t));
-  if(k==='text'){try{await navigator.clipboard.writeText(await textP);toast('Message copied.');}catch(e){toast('Could not copy. Check your internet.');return;}await afterShare(t,o);S.modal=null;renderLayer();return;}
-  if(k==='sheet'){S.modal={...m,busy:'Getting the photos ready…',err:''};renderLayer();try{const [text,blobs]=await Promise.all([textP,photoBlobs(o,10)]);const files=blobs.map((bl,i)=>new File([bl],'home-'+(i+1)+'.'+((bl.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:bl.type||'image/jpeg'}));
-   S.modal={...m,busy:'',err:''};renderLayer();if(!files.length)throw new Error('nophotos');await navigator.share({files,text});await afterShare(t,o);S.modal=null;renderLayer();}catch(e){if(e&&e.name==='AbortError'){S.modal={...m,busy:''};renderLayer();return;}S.modal={...m,busy:'',err:e&&e.message==='nophotos'?'Could not load the photos. Use the first option.':'The share sheet did not open. Use the first option.'};renderLayer();}return;}
-  // board: copy the photo board in this click, open the chat with the text
-  const win=window.open('about:blank','_blank');let copied=false;const hasPh=(o.photoList||[]).some(x=>x&&/^https:/.test(x.url||''));
-  if(hasPh&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({'image/png':photoBoard(o).then(bl=>{if(!bl)throw new Error('nophotos');return bl;})})]);copied=true;}catch(e){copied=false;}}
-  let text;try{text=await textP;}catch(e){win?.close();toast('Could not make the link. Check your internet.');return;}const url=(to?'https://wa.me/'+to:'https://wa.me/')+'?text='+encodeURIComponent(text);if(win)win.location.href=url;else window.open(url,'_blank','noopener');
-  await afterShare(t,o);S.modal=null;renderLayer();toast(hasPh?(copied?'Photos copied. In the chat press '+(/Mac/.test(navigator.platform)?'⌘':'Ctrl')+' V, then send.':'Message ready. Photos could not be copied; the link has them all.'):'Message ready in WhatsApp.');return;}
+ if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;S.modal={type:'wa',tid:t.id,pid:o.id,busy:'Making the link…'};renderLayer();try{const link=await makeShare(t,o);if(S.modal?.type!=='wa')return;S.modal={...S.modal,link,text:homeShareText(o,link,t),busy:''};}catch(e){S.modal={...S.modal,busy:'',err:'Could not make the link. Check your internet.'};}renderLayer();return;}
+ if(act==='wago'){const m=S.modal,t=S.byId.get(m.tid),o=S.byId.get(m.pid);if(!t||!o||!m.text)return;const k=b.dataset.k,text=m.text;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;
+  const hasPh=(o.photoList||[]).some(x=>x&&/^https:/.test(x.url||''));const key=/Mac|iPhone|iPad/.test(navigator.platform||'')?'⌘':'Ctrl';
+  if(k==='text'){try{await navigator.clipboard.writeText(text);toast('Message copied.');}catch(e){toast('Could not copy.');return;}await afterShare(t,o);S.modal=null;renderLayer();return;}
+  if(k==='sheet'){S.modal={...m,busy:'Getting the photos ready…',err:''};renderLayer();try{const blobs=await photoBlobs(o,10);const files=blobs.map((bl,i)=>new File([bl],'home-'+(i+1)+'.'+((bl.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:bl.type||'image/jpeg'}));
+   S.modal={...m,busy:'',err:''};renderLayer();if(!files.length)throw new Error('nophotos');await navigator.share({files,text});await afterShare(t,o);S.modal=null;renderLayer();}catch(e){if(e&&e.name==='AbortError'){S.modal={...m,busy:''};renderLayer();return;}S.modal={...m,busy:'',err:e&&e.message==='nophotos'?'Could not load the photos. Use WhatsApp app or WhatsApp Web.':'The share sheet does not work in this browser. Use WhatsApp app or WhatsApp Web.'};renderLayer();}return;}
+  // app / web: open WhatsApp in this same click (so the browser allows it), and copy the photo board alongside
+  const q='phone='+to+'&text='+encodeURIComponent(text);
+  let clip=Promise.resolve(false);if(hasPh&&navigator.clipboard&&window.ClipboardItem){try{clip=navigator.clipboard.write([new ClipboardItem({'image/png':photoBoard(o).then(bl=>{if(!bl)throw new Error('nophotos');return bl;})})]).then(()=>true,()=>false);}catch(e){}}
+  if(k==='app'){const a=document.createElement('a');a.href='whatsapp://send?'+q;document.body.appendChild(a);a.click();a.remove();}
+  else{const w=window.open('https://web.whatsapp.com/send?'+q,'tkwa');if(!w)location.href='https://web.whatsapp.com/send?'+q;}
+  const copied=await clip;await afterShare(t,o);S.modal=null;renderLayer();
+  toast(hasPh?(copied?'Message is in the chat. Photos are copied: click in the chat, press '+key+' V, then send.':'Message is in the chat. Photos could not be copied; the link has them all.'):'Message is in the chat.');return;}
  if(act==='twmore'){S.twAllOpen=!S.twAllOpen;render(true);return;}
  if(act==='twf'){S.twFilter=b.dataset.k;render(true);return;}
  if(act==='pflang'){if(await saveProfile({lang:b.dataset.lang})){location.reload();}return;}
@@ -1905,7 +1907,7 @@ function tk2Payload(o){const pp=prepare(o),d=leadDetails(o);const num=x=>{const 
 function tk2Link(o){return TK2_WEB+'#p-'+tk2Base32(JSON.stringify(tk2Payload(o)));}
 const HOME_WEB=location.origin+'/h/';
 function visitWindows(o){const to24=(h,a)=>{h=+h;if(!h&&h!==0)return null;if(a==='PM'&&h<12)h+=12;if(a==='AM'&&h===12)h=0;return h;};return vtParse(o.visitTimes).map(s=>[to24(s.f,s.fa),to24(s.t,s.ta)]).filter(([a,b])=>a!=null&&b!=null&&b>a);}
-async function makeShare(t,o){const sid=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>'abcdefghijkmnpqrstuvwxyz23456789'[b%32]).join('');const p=tk2Payload(o);const win=visitWindows(o);if(win.length)p.win=win;const bk=brokerageValue(t);if(bk)p.bk=bk;
+async function makeShare(t,o){const sid=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>'abcdefghijkmnpqrstuvwxyz23456789'[b%32]).join('');const p=tk2Payload(o);const win=visitWindows(o);if(win.length){p.vf=Math.min(...win.map(w=>w[0]));p.vt=Math.max(...win.map(w=>w[1]));p.win=win.map(w=>w[0]+'-'+w[1]);}const bk=brokerageValue(t);if(bk)p.bk=bk;
  await fdb.doc('shares/'+sid).set({tid:t.id,pid:o.id,p,by:String(FB.user?.email||''),at:new Date().toISOString()});return HOME_WEB+sid;}
 async function afterShare(t,o){const st=(t.shortlist||{})[o.id]||{};const now=new Date().toISOString();await mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[o.id]:{...st,stage:stageIx(st.stage)>stageIx('shared')?st.stage:'shared',sharedAt:now,added:st.added||'auto'}}}),'Shared on WhatsApp',{pid:o.id});}
 function homeShareText(o,link,t){const pl=tk2Payload(o);const rs=x=>'₹'+Number(x).toLocaleString('en-IN');const area=o.locality||areaFor(o.society)||'';
@@ -1931,9 +1933,10 @@ function waShareHtml(){const m=S.modal,t=S.byId.get(m.tid),o=S.byId.get(m.pid);i
  <p class="muted">The message has the full details of the home, the steps, and the link to book a visit. ${n?`It goes with ${n>4?'4 of the '+n:'the '+n} photo${n>1?'s':''}.`:'This home has no photos yet.'}</p>
  ${m.err?`<p class="warnline">${esc(m.err)}</p>`:''}
  <div class="waopts">
-  <button class="waopt" data-act="wago" data-k="board" ${m.busy?'disabled':''}>${icon('message-circle')}<span><b>WhatsApp on this computer</b><small>${n?`Opens the chat with the message. Then press <kbd>${mac?'⌘':'Ctrl'} V</kbd> in the chat to add the photos, and send.`:'Opens the chat with the message ready.'}</small></span></button>
-  ${sheet&&n?`<button class="waopt" data-act="wago" data-k="sheet" ${m.busy?'disabled':''}>${icon('share-2')}<span><b>Share sheet, all photos</b><small>Sends every photo as a picture with the message. Pick WhatsApp, then ${esc(t.name||'the tenant')}. Best on a phone.</small></span></button>`:''}
-  <button class="waopt" data-act="wago" data-k="text" ${m.busy?'disabled':''}>${icon('copy')}<span><b>Copy the message only</b><small>Paste it anywhere.</small></span></button>
+  <button class="waopt" data-act="wago" data-k="app" ${m.busy||!m.text?'disabled':''}>${icon('message-circle')}<span><b>WhatsApp app</b><small>Opens the chat in the WhatsApp app on this computer with the message typed.${n?` Photos are copied too: press <kbd>${mac?'⌘':'Ctrl'} V</kbd> in the chat, then send.`:''}</small></span></button>
+  <button class="waopt" data-act="wago" data-k="web" ${m.busy||!m.text?'disabled':''}>${icon('globe')}<span><b>WhatsApp Web</b><small>Opens web.whatsapp.com in a tab with the message typed.${n?` Photos are copied too: press <kbd>${mac?'⌘':'Ctrl'} V</kbd> in the chat, then send.`:''}</small></span></button>
+  ${sheet&&n?`<button class="waopt" data-act="wago" data-k="sheet" ${m.busy||!m.text?'disabled':''}>${icon('share-2')}<span><b>Share sheet, all photos</b><small>Every photo as a picture with the message. Works on phones; on a computer only if WhatsApp appears in the list.</small></span></button>`:''}
+  <button class="waopt" data-act="wago" data-k="text" ${m.busy||!m.text?'disabled':''}>${icon('copy')}<span><b>Copy the message only</b><small>Paste it anywhere.</small></span></button>
  </div>${m.busy?`<p class="muted">${esc(m.busy)}</p>`:''}</section></div>`;}
 
 function tk2ShareText(o){const pp=prepare(o),pl=tk2Payload(o);const facts=[pl.r,pl.f,pl.s?pl.s+' sft':''].filter(Boolean).join(' · ');const rs=x=>'₹'+Number(x).toLocaleString('en-IN');
@@ -1943,9 +1946,9 @@ function tk2ShareText(o){const pp=prepare(o),pl=tk2Payload(o);const facts=[pl.r,
 const VSTAT={booked:'Visit booked',cancelled:'Visit cancelled by tenant',visited:'Tenant says they visited'};
 function visitsFor(tid,pid){return (S.visits||[]).filter(v=>v.tid===tid&&(!pid||v.pid===pid)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));}
 async function foldVisits(){if(!S.loaded||S.folding)return;S.folding=true;try{
- for(const v of S.visits||[]){const key=[v.status,v.liked||'',v.done?'d':''].join('|');if(v.seen===key)continue;const t=S.byId.get(v.tid),o=S.byId.get(v.pid);if(!t){continue;}
-  const st=(t.shortlist||{})[v.pid]||{};const stage=v.liked==='yes'?'interested':v.status==='visited'||v.done?'visited':v.status==='booked'?'visit':st.stage||'shared';
-  const txt=v.liked?(v.liked==='yes'?'Tenant liked '+homeName(o||{})+' after the visit':'Tenant says '+homeName(o||{})+' is not for them'):VSTAT[v.status]+(v.status==='booked'?' for '+new Date(v.at).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'');
+ for(const v of S.visits||[]){const key=[v.status,v.liked||'',v.done?'d':'',v.tokenPaid?'t':'',v.detailsSent?'a':''].join('|');if(v.seen===key)continue;const t=S.byId.get(v.tid),o=S.byId.get(v.pid);if(!t){continue;}
+  const st=(t.shortlist||{})[v.pid]||{};const stage=v.tokenPaid?'chosen':v.liked==='yes'?'interested':v.status==='visited'||v.done?'visited':v.status==='booked'?'visit':st.stage||'shared';
+  const txt=v.detailsSent?'Tenant sent their details for the rent agreement for '+homeName(o||{}):v.tokenPaid?'Tenant paid the token to block '+homeName(o||{}):v.liked?(v.liked==='yes'?'Tenant liked '+homeName(o||{})+' after the visit':'Tenant says '+homeName(o||{})+' is not for them'):VSTAT[v.status]+(v.status==='booked'?' for '+new Date(v.at).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'');
   const keepStage=stageIx(st.stage)>stageIx(stage)&&!(v.liked==='no');
   await mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[v.pid]:{...st,added:st.added||'auto',stage:keepStage?st.stage:stage,...(v.status==='booked'?{visitAt:String(v.at).slice(0,16)}:{}),...(v.liked?{liked:v.liked}:{})}}}),txt,{pid:v.pid,vid:v.id});
   try{await fdb.doc('visits/'+v.id).update({seen:key});}catch(e){}}
