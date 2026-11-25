@@ -616,6 +616,7 @@ a.brand{color:inherit;text-decoration:none;cursor:pointer;border-radius:12px}a.b
 .billbar,.viewas{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:14px;padding:10px 14px;margin-bottom:14px}.billbar{background:var(--amber-soft);color:var(--amber)}.viewas{background:#e8f0ff;color:#1f4ad1}.billbar svg,.viewas svg{width:18px;height:18px;flex:none}.billbar span,.viewas span{flex:1;min-width:200px}
 .tbill{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:10px}.tbillrow{display:grid;grid-template-columns:repeat(2,minmax(0,240px));gap:10px}
 @media(max-width:767px){.tbillrow,.plans{grid-template-columns:1fr}.paylist li{grid-template-columns:1fr auto}}
+.wam .muted{color:var(--muted);margin:4px 0 12px}.waopts{display:grid;gap:10px}.waopt{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);font:inherit;cursor:pointer}.waopt:hover{border-color:var(--accent);background:var(--green-soft)}.waopt svg{width:20px;height:20px;flex:none;margin-top:2px;color:var(--accent)}.waopt span{display:flex;flex-direction:column;gap:3px}.waopt small{color:var(--muted);font-size:13.5px;line-height:1.4}.waopt kbd{font:600 12px system-ui;border:1px solid var(--line);border-radius:6px;padding:1px 5px;background:#fff}.waopt[disabled]{opacity:.5;cursor:wait}.warnline{color:#b3261e;font-size:14px}
 </style>
 </head>
 <body>
@@ -937,8 +938,8 @@ function render(force){
  else if(S.view==='today')m.innerHTML=todayView(c);
  else if(S.view==='profile')m.innerHTML=profileView();
  else if(S.view==='admin'&&FB.admin&&!S.viewAs)m.innerHTML=adminView();
- if(S.viewAs||billBanner())m.insertAdjacentHTML('afterbegin',viewAsBar()+billBanner());
  else m.innerHTML=listView(c);
+ if(S.viewAs||billBanner())m.insertAdjacentHTML('afterbegin',viewAsBar()+billBanner());
  renderLayer();
  fixIcons();
  watchMore();
@@ -1443,6 +1444,7 @@ function renderLayer(){
  if(S.modal?.type==='flex')h+=flexHtml();
  if(S.modal?.type==='callwith')h+=callWithHtml();
  if(S.modal?.type==='pay')h+=payHtml();
+ if(S.modal?.type==='wa')h+=waShareHtml();
  if(S.modal?.type==='addhome')h+=addHomeHtml();
  if(S.modal?.type==='mremove')h+=removeHomeHtml();
  if(S.modal?.type==='deal')h+=dealHtml();
@@ -1667,8 +1669,17 @@ document.addEventListener('click',async e=>{
  if(act==='callfillall'){fillFromCall(Object.keys(CALL.found));return;}
  if(act==='callnotes'){const cl=S.byId.get(CALL.id);if(!cl)return;const d=draftOf(cl);const said=CALL.lines.join(' ');const picked=Object.values(CALL.found).map(f=>f.label+': '+f.show).join(' · ');d.discussion=[String(d.discussion||'').trim(),picked?'From the call: '+picked+'.':'',said].filter(Boolean).join('\n');renderCard(cl.id);queueSave(cl);document.getElementById('dn-'+cl.id)?.scrollIntoView({block:'center',behavior:'smooth'});toast('Added to today\'s call notes. Set the next follow-up to finish.');return;}
  if(act==='vdone'){const v=(S.visits||[]).find(x=>x.id===b.dataset.vid);if(!v)return;const c=prompt('Type the 4-digit visit code the tenant tells you after the visit.');if(c==null)return;if(String(c).trim()!==String(v.code)){toast('That code does not match. Ask the tenant for the code on their visit page.');return;}try{await fdb.doc('visits/'+v.id).update({done:true,status:'visited',doneAt:new Date().toISOString(),doneBy:String(FB.user?.email||'')});toast('Visit marked done.');}catch(e){toast('Could not save. Check your internet.');}return;}
- if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;const win=window.open('about:blank','_blank');let link;try{link=await makeShare(t,o);}catch(e){win?.close();toast('Could not make the link. Check your internet.');return;}const url=(to?'https://wa.me/'+to:'https://wa.me/')+'?text='+encodeURIComponent(homeShareText(o,link));if(win)win.location.href=url;else window.open(url,'_blank','noopener');
-  const st=(t.shortlist||{})[o.id]||{};const now=new Date().toISOString();mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[o.id]:{...st,stage:stageIx(st.stage)>stageIx('shared')?st.stage:'shared',sharedAt:now,added:st.added||'auto'}}}),'Shared on WhatsApp',{pid:o.id});toast('WhatsApp opened with the home details and visit link.');return;}
+ if(act==='mshare'){const t=S.byId.get(id),o=S.byId.get(b.dataset.pid);if(!t||!o)return;S.modal={type:'wa',tid:t.id,pid:o.id};renderLayer();return;}
+ if(act==='wago'){const m=S.modal,t=S.byId.get(m.tid),o=S.byId.get(m.pid);if(!t||!o)return;const k=b.dataset.k;const ph=String(phone(t.phone)||'').replace(/\D/g,'');const to=ph.length===10?'91'+ph:ph;
+  const linkP=makeShare(t,o);const textP=linkP.then(link=>homeShareText(o,link,t));
+  if(k==='text'){try{await navigator.clipboard.writeText(await textP);toast('Message copied.');}catch(e){toast('Could not copy. Check your internet.');return;}await afterShare(t,o);S.modal=null;renderLayer();return;}
+  if(k==='sheet'){S.modal={...m,busy:'Getting the photos ready…',err:''};renderLayer();try{const [text,blobs]=await Promise.all([textP,photoBlobs(o,10)]);const files=blobs.map((bl,i)=>new File([bl],'home-'+(i+1)+'.'+((bl.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:bl.type||'image/jpeg'}));
+   S.modal={...m,busy:'',err:''};renderLayer();if(!files.length)throw new Error('nophotos');await navigator.share({files,text});await afterShare(t,o);S.modal=null;renderLayer();}catch(e){if(e&&e.name==='AbortError'){S.modal={...m,busy:''};renderLayer();return;}S.modal={...m,busy:'',err:e&&e.message==='nophotos'?'Could not load the photos. Use the first option.':'The share sheet did not open. Use the first option.'};renderLayer();}return;}
+  // board: copy the photo board in this click, open the chat with the text
+  const win=window.open('about:blank','_blank');let copied=false;const hasPh=(o.photoList||[]).some(x=>x&&/^https:/.test(x.url||''));
+  if(hasPh&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({'image/png':photoBoard(o).then(bl=>{if(!bl)throw new Error('nophotos');return bl;})})]);copied=true;}catch(e){copied=false;}}
+  let text;try{text=await textP;}catch(e){win?.close();toast('Could not make the link. Check your internet.');return;}const url=(to?'https://wa.me/'+to:'https://wa.me/')+'?text='+encodeURIComponent(text);if(win)win.location.href=url;else window.open(url,'_blank','noopener');
+  await afterShare(t,o);S.modal=null;renderLayer();toast(hasPh?(copied?'Photos copied. In the chat press '+(/Mac/.test(navigator.platform)?'⌘':'Ctrl')+' V, then send.':'Message ready. Photos could not be copied; the link has them all.'):'Message ready in WhatsApp.');return;}
  if(act==='twmore'){S.twAllOpen=!S.twAllOpen;render(true);return;}
  if(act==='twf'){S.twFilter=b.dataset.k;render(true);return;}
  if(act==='pflang'){if(await saveProfile({lang:b.dataset.lang})){location.reload();}return;}
@@ -1896,7 +1907,35 @@ const HOME_WEB=location.origin+'/h/';
 function visitWindows(o){const to24=(h,a)=>{h=+h;if(!h&&h!==0)return null;if(a==='PM'&&h<12)h+=12;if(a==='AM'&&h===12)h=0;return h;};return vtParse(o.visitTimes).map(s=>[to24(s.f,s.fa),to24(s.t,s.ta)]).filter(([a,b])=>a!=null&&b!=null&&b>a);}
 async function makeShare(t,o){const sid=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>'abcdefghijkmnpqrstuvwxyz23456789'[b%32]).join('');const p=tk2Payload(o);const win=visitWindows(o);if(win.length)p.win=win;const bk=brokerageValue(t);if(bk)p.bk=bk;
  await fdb.doc('shares/'+sid).set({tid:t.id,pid:o.id,p,by:String(FB.user?.email||''),at:new Date().toISOString()});return HOME_WEB+sid;}
-function homeShareText(o,link){return tk2ShareText(o).replace(/https:\/\/trustkeyper-tk2-staging\.web\.app\/#p-[a-z2-7]+/,link);}
+async function afterShare(t,o){const st=(t.shortlist||{})[o.id]||{};const now=new Date().toISOString();await mWrite(t.id,x=>({shortlist:{...(x.shortlist||{}),[o.id]:{...st,stage:stageIx(st.stage)>stageIx('shared')?st.stage:'shared',sharedAt:now,added:st.added||'auto'}}}),'Shared on WhatsApp',{pid:o.id});}
+function homeShareText(o,link,t){const pl=tk2Payload(o);const rs=x=>'₹'+Number(x).toLocaleString('en-IN');const area=o.locality||areaFor(o.society)||'';
+ const rent=pl.rent?rs(pl.rent)+(pl.mi?' (maintenance included)':pl.m?' + '+rs(pl.m)+' maintenance':' + maintenance')+(pl.rn?', negotiable':''):'';
+ const bk=t?brokerageValue(t):'';const rows=[['Rent',rent],['Deposit',pl.d?rs(pl.d):''],['Brokerage',bk],['Visit fee','Free'],['Size',pl.s?Number(pl.s).toLocaleString('en-IN')+' sft':''],['Furnishing',pl.f],['Floor',pl.tf?pl.fl+' of '+pl.tf:''],['Facing',pl.fc||''],['Who can rent',pl.w],['Pets',pl.pt?'Allowed':'Not allowed'],['Available',pl.av?pl.av:'Now']].filter(r=>r[1]);
+ const steps=[['Book a visit','pick a day and time that suits you.'],['Visit the house','see it with the broker.'],['Pay a token to block it','once paid, we stop showing the house to others.'],['Rent agreement is made','we draft it for you and the owner.'],['Sign the agreement','online, from your phone.'],['Pay and collect the keys','security deposit, brokerage (if any) and 1 month\'s rent.']];
+ const me=S.profile||{};
+ const cap=s=>String(s).replace(/\b([a-z])/g,c=>c.toUpperCase());
+ return ['*'+cap(pl.t)+'*',area&&area!==pl.t?area:'',[pl.r,pl.f,pl.s?Number(pl.s).toLocaleString('en-IN')+' sft':''].filter(Boolean).join(' · '),'',...rows.map(([k,v])=>'• *'+k+':* '+v),'','*What happens next*',...steps.map(([a,b],i)=>(i+1)+'. '+a+' – '+b),'','*See all photos and book a visit (free):*',link,'','– TrustKeyper'+(me.name?' · '+me.name:'')+(me.phone?', '+me.phone:'')].filter((x,i,a)=>x!==''||(i>0&&a[i-1]!=='')).join('\n');}
+/* Photos for WhatsApp: wa.me can only carry text, so photos go one of two ways —
+   phone/share sheet: the real photo files + the text; computer: one picture board copied to the clipboard, pasted into the chat with ⌘/Ctrl+V. */
+async function photoBlobs(o,max){const urls=(o.photoList||[]).map(x=>x&&x.url).filter(u=>/^https:/.test(u||'')).slice(0,max||10);const out=[];for(const u of urls){try{const r=await fetch(u,{mode:'cors',cache:'no-store'});if(r.ok)out.push(await r.blob());}catch(e){}}return out;}
+async function photoBoard(o){const blobs=await photoBlobs(o,4);if(!blobs.length)return null;const imgs=[];for(const b of blobs){try{imgs.push(await createImageBitmap(b));}catch(e){}}if(!imgs.length)return null;
+ const W=1200,top=800,th=300,band=150,n=imgs.length,H=top+(n>1?th:0)+band;const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+ const cover=(im,dx,dy,dw,dh)=>{const s=Math.max(dw/im.width,dh/im.height),sw=dw/s,sh=dh/s;x.drawImage(im,(im.width-sw)/2,(im.height-sh)/2,sw,sh,dx,dy,dw,dh);};
+ cover(imgs[0],0,0,W,top);const rest=imgs.slice(1);rest.forEach((im,i)=>{const w=(W-(rest.length-1)*6)/rest.length;cover(im,i*(w+6),top+6,w,th-6);});
+ const pl=tk2Payload(o);const by=H-band;x.fillStyle='#1f4f3f';x.fillRect(0,by,W,band);x.fillStyle='#fff';x.font='700 44px system-ui,-apple-system,Segoe UI,sans-serif';x.fillText(String(pl.t).replace(/\b([a-z])/g,c=>c.toUpperCase()).slice(0,40),40,by+62);
+ x.font='500 32px system-ui,-apple-system,Segoe UI,sans-serif';x.fillText([pl.r,pl.rent?'₹'+Number(pl.rent).toLocaleString('en-IN')+'/month':'',o.locality||areaFor(o.society)||''].filter(Boolean).join('  ·  ').slice(0,70),40,by+112);
+ return await new Promise(r=>c.toBlob(r,'image/png'));}
+function waShareHtml(){const m=S.modal,t=S.byId.get(m.tid),o=S.byId.get(m.pid);if(!t||!o)return '';const n=(o.photoList||[]).filter(x=>x&&/^https:/.test(x.url||'')).length;const sheet=!!(navigator.canShare&&navigator.canShare({files:[new File(['x'],'a.jpg',{type:'image/jpeg'})]}));
+ const mac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
+ return `<div class="overlay"><section class="modal wam" role="dialog" aria-modal="true" aria-label="Share on WhatsApp" style="max-width:560px"><div class="mhead"><h2>Send ${esc(homeName(o))} to ${esc(t.name||'the tenant')}</h2><button class="iconx" data-act="closemodal" aria-label="Close">${icon('x')}</button></div>
+ <p class="muted">The message has the full details of the home, the steps, and the link to book a visit. ${n?`It goes with ${n>4?'4 of the '+n:'the '+n} photo${n>1?'s':''}.`:'This home has no photos yet.'}</p>
+ ${m.err?`<p class="warnline">${esc(m.err)}</p>`:''}
+ <div class="waopts">
+  <button class="waopt" data-act="wago" data-k="board" ${m.busy?'disabled':''}>${icon('message-circle')}<span><b>WhatsApp on this computer</b><small>${n?`Opens the chat with the message. Then press <kbd>${mac?'⌘':'Ctrl'} V</kbd> in the chat to add the photos, and send.`:'Opens the chat with the message ready.'}</small></span></button>
+  ${sheet&&n?`<button class="waopt" data-act="wago" data-k="sheet" ${m.busy?'disabled':''}>${icon('share-2')}<span><b>Share sheet, all photos</b><small>Sends every photo as a picture with the message. Pick WhatsApp, then ${esc(t.name||'the tenant')}. Best on a phone.</small></span></button>`:''}
+  <button class="waopt" data-act="wago" data-k="text" ${m.busy?'disabled':''}>${icon('copy')}<span><b>Copy the message only</b><small>Paste it anywhere.</small></span></button>
+ </div>${m.busy?`<p class="muted">${esc(m.busy)}</p>`:''}</section></div>`;}
+
 function tk2ShareText(o){const pp=prepare(o),pl=tk2Payload(o);const facts=[pl.r,pl.f,pl.s?pl.s+' sft':''].filter(Boolean).join(' · ');const rs=x=>'₹'+Number(x).toLocaleString('en-IN');
  return ['🏠 '+pl.t,(o.locality||areaFor(o.society))?'📍 '+(o.locality||areaFor(o.society)):'',facts,pl.rent?'Rent '+rs(pl.rent)+(pl.mi?'':' + '+rs(pl.m)+' maintenance')+(pl.rn?' (negotiable)':'')+(pl.d?' · Deposit '+rs(pl.d):''):'',pl.w&&pl.w!=='Anyone'?'For '+pl.w:'',pl.pt?'':'No pets','Available '+(pl.av?'from '+pl.av:'now'),'','See photos and book a visit (free):',tk2Link(o),'','– '+pl.bn+(pl.bp?', '+pl.bp:'')].filter((x,i,a)=>x!==''||(a[i-1]!=='')).join('\n');}
 
@@ -1986,7 +2025,7 @@ function adminView(){const keys=Object.keys(S.access||{}).sort();const rows=keys
  const paying=rows.filter(r=>needsBilling(r.a));const mrr=paying.reduce((n,r)=>n+(r.a.plan==='yearly'?(Number(r.a.yearPm)||BILL.yearDefault):Number(r.a.fee)),0);
  const overdue=paying.filter(r=>billStatus(r.a).k==='overdue').length,due=paying.filter(r=>billStatus(r.a).k==='due').length;const pays=(S.allPayments||[]).slice(0,15);
  const monthIn=(S.allPayments||[]).filter(p=>String(p.createdAt).slice(0,7)===t.slice(0,7)).reduce((n,p)=>n+Number(p.amount||0),0);
- const card=(n,l,s)=>`<div class="metric"><small>${l}</small><b>${n}</b>${s?`<span>${s}</span>`:''}</div>`;
+ const card=(n,l,s)=>`<div class="metric"><span>${l}</span><strong>${n}</strong>${s?`<small>${s}</small>`:''}</div>`;
  return `<div class="head"><div><h1>Admin</h1><p class="sub">Who can open the desk, what each person sees, what they pay, and a preview of their screen.</p></div></div>
  <div class="metrics">${card(keys.length,'People with access',paying.length+' paying')}${card(rs(mrr),'Monthly revenue','from active plans')}${card(rs(monthIn),'Collected this month',(S.allPayments||[]).length+' payments in total')}${card(overdue+due,'Need attention',overdue+' overdue · '+due+' due tonight')}</div>
  ${teamPanel()}
@@ -2091,7 +2130,7 @@ function moveInFrom(s){const d=new Date();const iso=x=>x.toISOString().slice(0,1
  const mo=['january','february','march','april','may','june','july','august','september','october','november','december'];for(let i=0;i<12;i++){const r=new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?'+mo[i]+'|'+mo[i]+'\\s+(\\d{1,2})|(?:by|from|in|start of|beginning of|end of)\\s+'+mo[i]);const m=s.match(r);if(m){const day=+(m[1]||m[2])||(/end of/.test(m[0])?28:1);let y=d.getFullYear();if(i<d.getMonth()||(i===d.getMonth()&&day<d.getDate()))y++;return iso(new Date(Date.UTC(y,i,day)));}}return null;}
 function fillFromCall(keys){const l=S.byId.get(CALL.id);if(!l)return;const d=draftOf(l);for(const k of keys){const f=CALL.found[k];if(!f||f.done)continue;d.details[k]=f.val;f.done=true;}renderCard(l.id);queueSave(l);drawCallPanel();toast('Filled from the call. Check the card.');}
 /* ===== Today's work: one list per person, in the order to do it ===== */
-function todayView(c){const nm=(S.profile?.name||'').split(' ')[0];const hr=+new Date().toLocaleString('en-IN',{hour:'numeric',hour12:false,timeZone:'Asia/Kolkata'});const hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+function todayView(c){const nm=((S.viewAs?((S.profiles||{})[S.viewAs]?.name||S.viewAs):S.profile?.name)||'').split(' ')[0];const hr=+new Date().toLocaleString('en-IN',{hour:'numeric',hour12:false,timeZone:'Asia/Kolkata'});const hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
  const live=S.leads.filter(l=>!l.deletedAt&&l.status!=='closed');
  const readyT=live.filter(l=>l.kind==='tenant'&&leadReadiness(l)==='ready').length,readyP=live.filter(l=>l.kind==='owner'&&leadReadiness(l)==='ready').length;
  /* Which side is short for matching? Call that side first. */
