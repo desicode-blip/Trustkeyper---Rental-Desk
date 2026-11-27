@@ -639,6 +639,7 @@ a.brand{color:inherit;text-decoration:none;cursor:pointer;border-radius:12px}a.b
 .hmopen{margin-left:auto;display:inline-flex;align-items:center;gap:2px;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}.hmopen svg{width:15px;height:15px}.hm .select,.hm select,.hm button{cursor:pointer}
 [data-card].jumped{animation:jumpflash 1.8s ease}@keyframes jumpflash{0%,40%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:none}}
 .hmnote{margin-top:10px;display:flex;flex-direction:column;gap:8px;cursor:default}.hmnote textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;resize:vertical;min-height:72px}.hmnote textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--green-soft)}
+.leadpop{max-width:min(1100px,calc(100vw - 32px))!important;width:min(1100px,calc(100vw - 32px))!important}.leadpop .mhead{align-items:flex-start;gap:12px}.leadpop .mhead h2{margin:0}.leadpop .mhead .place{margin:2px 0 0}.leadpop [data-card]{margin:0;box-shadow:none}
 </style>
 </head>
 <body>
@@ -1074,7 +1075,7 @@ function listView(c){
   html+=`<div class="head"><div><h1>${brokers?'Brokers':v==='tenants'?'Tenants':'Properties'}</h1><p class="sub">${S.tab==='all'&&S.onlyClosed?(kind==='tenant'&&!brokers?'Tenants who found a place or stopped looking, with the reason.':'Homes rented out or not available, with the reason.'):S.tab==='today'?'New leads from the last 48 hours that nobody has opened yet.':S.tab==='incomplete'?'Call every new lead and fill the details marked <span class="must-mark">*</span>.':'Every '+(brokers?'broker lead':kind==='tenant'?'tenant':'property')+', active or not.'}</p></div>${brokers?'':`<button class="btn primary" data-add="${kind}">${icon('plus')}Add ${kind==='tenant'?'tenant':'property'}</button>`}</div>
   <div class="tabs"><button data-tab="today" class="todaytab" aria-pressed="${S.tab==='today'}">${icon('sparkles')}Today's leads<b class="${all.filter(isNew).length?'live':''}">${all.filter(isNew).length}</b></button><button data-tab="incomplete" aria-pressed="${S.tab==='incomplete'}">To call<b>${inc.length}</b></button><button data-tab="all" aria-pressed="${S.tab==='all'}">All ${label}<b>${all.length}</b></button></div>${S.tab==='all'?`<label class="onlyclosed"><input type="checkbox" role="switch" data-onlyclosed="1" ${S.onlyClosed?'checked':''}><span class="sw" aria-hidden="true"></span>Show only ${closedLabel.toLowerCase()} <b>${closedN}</b></label>`:''}${toolsBar()}
   <p class="count">${rows.length} ${rows.length===1?'record':'records'}</p>`;
-  const lk=[v,S.tab,S.query,S.source,S.contact,S.sortKey,S.sortDir,S.kindFilter].join('|');if(S.limitKey!==lk){S.limitKey=lk;S.limit=20;}S.pageRows=rows;
+  const lk=[v,S.tab,S.query,S.source,S.contact,S.sortKey,S.sortDir,S.kindFilter].join('|');if(S.limitKey!==lk){S.limitKey=lk;S.limit=S.restoreLimit||20;S.restoreLimit=0;}S.pageRows=rows;
   html+=rows.length?`<div class="cards">${rows.slice(0,S.limit).map((l,i)=>(i===S.sentFrom?sentDivider(rows.length-S.sentFrom):'')+card(l,{queue:S.tab==='incomplete',serial:i+1})).join('')}</div>${rows.length>S.limit?`<div class="moremark" data-more="1">Loading more…</div>`:''}`:`<div class="empty"><h3>${S.tab==='incomplete'?'No calls waiting':'Nothing here yet'}</h3><p>${S.tab==='incomplete'?'Leads without a phone number are under the All tab.':'Add one with the button above.'}</p></div>`;
   return html;
  }
@@ -1314,7 +1315,7 @@ function homeRows(t,opts){const sl=t.shortlist||{},hid=t.hiddenHomes||{},rows=[]
  for(const [pid,s] of Object.entries(sl)){if(seen.has(pid)||hid[pid])continue;const o=S.byId.get(pid);if(!o||o.deletedAt)continue;seen.add(pid);const m=(opts||[]).find(x=>x.property.id===pid)||null;rows.push({o,m,manual:s.added==='manual',st:s});}
  rows.forEach((r,i)=>r.i=i);rows.sort((a,b)=>(stageIx(b.st.stage)-stageIx(a.st.stage))||((b.manual?1:0)-(a.manual?1:0))||(a.i-b.i));return rows;}
 function homeRow(t,r){const o=r.o,tid=esc(t.id),pid=esc(o.id),st=r.st.stage||'suggested',gone=o.status==='closed';const last=[...(t.matchLog||[])].reverse().find(e=>e.pid===o.id&&!e.auto)||[...(t.matchLog||[])].reverse().find(e=>e.pid===o.id);
- return `<div class="hm st-${st} ${gone?'gone':''}" data-openhome="${pid}" tabindex="0" role="link" aria-label="Open ${esc(homeName(o))} in Properties" title="Open the full property card"><div class="hmtop"><span class="t">${esc(homeName(o))}</span><span class="tag ${r.manual?'mine':'auto'}">${r.manual?'Added by you':'Suggested'}</span>${gone?`<span class="tag closedtag">${icon('archive')}${esc(leadClosureLabel(o))}</span>`:''}<span class="hmopen">Open ${icon('chevron-right')}</span></div>
+ return `<div class="hm st-${st} ${gone?'gone':''}" data-openhome="${pid}" tabindex="0" role="link" aria-label="See full details of ${esc(homeName(o))}" title="See the full property details"><div class="hmtop"><span class="t">${esc(homeName(o))}</span><span class="tag ${r.manual?'mine':'auto'}">${r.manual?'Added by you':'Suggested'}</span>${gone?`<span class="tag closedtag">${icon('archive')}${esc(leadClosureLabel(o))}</span>`:''}<span class="hmopen">Details ${icon('chevron-right')}</span></div>
  <span class="p">${esc(o.requirement||'Home type to confirm')} · ${esc(propertyRentLabel(o))}${o.locality?' · '+esc(o.locality):''}</span><span>${esc(o.name||'Owner')} · <b>${esc(prepare(o).phone||'No phone')}</b>${isBroker(o)?' · Broker':''}</span>
  ${r.m&&r.m.reasons.length?`<span class="reasons">${esc(r.m.reasons.join(' · '))}</span>`:''}${r.m&&r.m.checks.length?`<span class="hmcheck">${icon('alert-circle')}Check: ${esc(r.m.checks.join(' · '))}</span>`:(!r.m&&!gone?`<span class="hmcheck">${icon('alert-circle')}Not an automatic match. Check it fits the tenant.</span>`:'')}
  <div class="hmrow"><label class="sr" for="ms-${tid}-${pid}">Stage</label><select id="ms-${tid}-${pid}" class="mstage" data-mstage="1" data-t="${tid}" data-p="${pid}" ${gone?'disabled':''}>${MSTAGES.map(([v,x])=>`<option value="${v}" ${v===st?'selected':''}>${x}</option>`).join('')}</select>${st==='visit'||st==='visited'?`<label class="mvis">${icon('calendar')}<input type="datetime-local" data-mvisit="1" data-t="${tid}" data-p="${pid}" value="${esc(r.st.visitAt||'')}" aria-label="Visit date and time"></label>`:''}</div>
@@ -1467,6 +1468,7 @@ function renderLayer(){
  if(S.modal?.type==='callwith')h+=callWithHtml();
  if(S.modal?.type==='pay')h+=payHtml();
  if(S.modal?.type==='wa')h+=waShareHtml();
+ if(S.modal?.type==='leadpop'){const l=S.byId.get(S.modal.id);if(l){const own=l.kind==='owner';h+=`<div class="overlay"><section class="modal leadpop" role="dialog" aria-modal="true" aria-label="${own?'Property':'Lead'} details"><div class="mhead stick"><div><h2>${esc(own?homeName(l):(l.name||'Tenant'))}</h2><p class="place">${own?'Property':'Tenant'} details · changes save as you go</p></div><div class="row"><button class="btn link" data-act="lpfull" data-id="${esc(l.id)}">${icon('arrow-up-right')}Open in ${own?'Properties':'Tenants'}</button><button class="btn" data-act="closemodal" aria-label="Close">${icon('x')}Close</button></div></div>${card(l,{})}</section></div>`;}}
  if(S.modal?.type==='addhome')h+=addHomeHtml();
  if(S.modal?.type==='mremove')h+=removeHomeHtml();
  if(S.modal?.type==='deal')h+=dealHtml();
@@ -1619,7 +1621,7 @@ function dbg(...a){try{S.db&&S.db.doc('config/syncDebug').set({at:new Date().toI
 function maybeAutoSync(){if(S.autoSynced||!S.loaded||!S.syncInfoLoaded)return;S.autoSynced=true;const last=Date.parse(S.sheetSync?.lastRun||0)||0;if(Date.now()-last>6*36e5||S.sheetSync?.v!==SYNC_V)setTimeout(()=>runSheetSync(false),2000);}
 const SAVE={timers:{},pending:new Set(),busy:0,done:false,err:false};
 function saveUI(){const el=document.getElementById('savepill');if(!el)return;const busy=SAVE.pending.size||SAVE.busy;el.className='savepill '+(busy?'busy':SAVE.err?'err':SAVE.done?'done':'');el.innerHTML=busy?'<span class="spin" aria-hidden="true"></span>Saving…':SAVE.err?'Could not save. Trying again…':SAVE.done?icon('check')+'All changes saved':'';fixIcons();}
-function renderCard(id){if(S.modal?.lead?.id===id&&!S.byId.has(id)){renderLayer();return;}const el=document.querySelector(`[data-card="${CSS.escape(id)}"]`);const l=S.byId.get(id);if(!el||!l||el.classList.contains('pair')){render(true);return;}const anc=takeAnchor()||{sel:`[data-card="${CSS.escape(id)}"]`,top:el.getBoundingClientRect().top};const sn=el.querySelector('.num.serial');const t=document.createElement('div');t.innerHTML=card(l,{serial:sn?+sn.textContent:undefined,queue:S.tab==='incomplete'});const nw=t.firstElementChild;el.replaceWith(nw);fixIcons();putAnchor(anc);}
+function renderCard(id){if(S.modal?.lead?.id===id&&!S.byId.has(id)){renderLayer();return;}if(S.modal?.type==='leadpop'&&S.modal.id===id){renderLayer();if(!document.querySelector(`#main [data-card="${CSS.escape(id)}"]`))return;}const el=document.querySelector(`#main [data-card="${CSS.escape(id)}"], #layer [data-card="${CSS.escape(id)}"]`);const l=S.byId.get(id);if(!el||!l||el.classList.contains('pair')){render(true);return;}const anc=takeAnchor()||{sel:`[data-card="${CSS.escape(id)}"]`,top:el.getBoundingClientRect().top};const sn=el.querySelector('.num.serial');const t=document.createElement('div');t.innerHTML=card(l,{serial:sn?+sn.textContent:undefined,queue:S.tab==='incomplete'});const nw=t.firstElementChild;el.replaceWith(nw);fixIcons();putAnchor(anc);}
 SAVE.chain=Promise.resolve();
 function queueSave(l){if(!l||!S.byId.has(l.id))return;SAVE.pending.add(l.id);clearTimeout(SAVE.timers[l.id]);SAVE.timers[l.id]=setTimeout(()=>{SAVE.chain=SAVE.chain.then(()=>flushSave(l.id)).catch(()=>{});},800);saveUI();}
 async function flushSave(id){
@@ -1641,9 +1643,10 @@ function pendingCount(){return S.leads.filter(l=>!l.deletedAt&&(l.sheetChanges||
 /* ===== Events ===== */
 document.addEventListener('click',async e=>{
  if(e.target.classList?.contains('overlay')&&S.modal2?.type==='survey'){await cancelSurvey();return;}
- if(e.target.classList?.contains('overlay')&&['addhome','mremove','deal','add','delete','purge','callback'].includes(S.modal?.type)){keepAdd();S.modal=null;renderLayer();return;}
+ if(e.target.classList?.contains('overlay')&&S.modal?.type==='leadpop'&&!e.target.closest('.modal')){closeLeadPop();return;}
+  if(e.target.classList?.contains('overlay')&&['addhome','mremove','deal','add','delete','purge','callback'].includes(S.modal?.type)){keepAdd();S.modal=null;renderLayer();return;}
  const nav=e.target.closest('[data-nav]');
- if(nav){S.view=nav.dataset.nav;S.tab='incomplete';S.query='';S.source='all';S.contact='all';S.kindFilter='all';location.hash=S.view;window.scrollTo(0,0);render(true);return;}
+ if(nav){saveNav();S.view=nav.dataset.nav;S.tab='incomplete';S.query='';S.source='all';S.contact='all';S.kindFilter='all';S.onlyClosed=false;S.dFrom='';S.dTo='';if(S.modal?.type==='leadpop'){S.modal=null;renderLayer();}window.scrollTo(0,0);render(true);pushNav();return;}
  const tab=e.target.closest('[data-tab]');if(tab){S.tab=tab.dataset.tab;render(true);return;}
  const sp=e.target.closest('[data-sortkey]');if(sp){const k=sp.dataset.sortkey;if(S.sortKey===k&&k!=='rel')S.sortDir=S.sortDir==='asc'?'desc':'asc';else{S.sortKey=k;S.sortDir=(SORTS.find(x=>x[0]===k)||[])[2]||'desc';}render(true);return;}
  const mt=e.target.closest('[data-mtab]');if(mt){S.mtab=mt.dataset.mtab;render(true);return;}
@@ -1664,7 +1667,8 @@ document.addEventListener('click',async e=>{
  if(S.datePop&&!e.target.closest('.dwrap')){S.datePop=false;render(true);}
  const b=e.target.closest('[data-act]');if(!b)return;
  const act=b.dataset.act,id=b.dataset.id,l=id?S.byId.get(id):null;
- if(act==='closemodal'){keepAdd();S.modal=null;renderLayer();return;}
+ if(act==='closemodal'){if(S.modal?.type==='leadpop'){closeLeadPop();return;}keepAdd();S.modal=null;renderLayer();return;}
+ if(act==='lpfull'){goLead(b.dataset.id);return;}
  if(act==='fbmic'){fbStartStop();return;}
  if(act==='golead'){goLead(id);return;}
  if(act==='viewas'){setViewAs(b.dataset.email);return;}
@@ -1792,7 +1796,7 @@ document.addEventListener('click',async e=>{
   if(await writeLead(next,changedFlags(l).discussion?{discussion:draftOf(l).discussion}:{})){delete S.attempt['err:'+l.id];const nowReady=leadReadiness(next)==='ready';toast(nowReady&&!wasReady?'Saved and sent for matching.':wasReady&&!nowReady?'Saved. Back on the call list: '+matchingBlockers(next).map(b=>b.label.toLowerCase()).join(', ')+' missing.':'Saved.',nowReady!==wasReady?l:undefined);}
   render(true);return;
  }
- if(act==='gomatch'){S.view='matches';S.mtab='open';location.hash='#matches';render(true);setTimeout(()=>{const el=document.querySelector(`[data-card="${CSS.escape(l.id)}"]`)||[...document.querySelectorAll('#main [data-card]')].find(c=>c.querySelector(`[data-pid="${CSS.escape(l.id)}"]`));el?.scrollIntoView({block:'start',behavior:'smooth'});},120);return;}
+ if(act==='gomatch'){saveNav();S.view='matches';S.mtab='open';S.query='';window.scrollTo(0,0);render(true);pushNav();setTimeout(()=>{const el=document.querySelector(`[data-card="${CSS.escape(l.id)}"]`)||[...document.querySelectorAll('#main [data-card]')].find(c=>c.querySelector(`[data-pid="${CSS.escape(l.id)}"]`));el?.scrollIntoView({block:'start',behavior:'smooth'});},120);return;}
  if(act==='refreshmatch'){b.disabled=true;b.innerHTML=`<span class="spin" aria-hidden="true"></span>Refreshing…`;S._mc=null;await new Promise(r=>setTimeout(r,700));S._mc=null;renderCard(l.id);toast(matchChip(l).replace('Matching · ','Matches: ')+'.');return;}
  if(act==='send'){
   S.attempt[l.id]=true;delete S.attempt['err:'+l.id];const next=merged(l);
@@ -2073,7 +2077,7 @@ function billingSection(){const a=S.myAccess;if(FB.admin)return `<section class=
  <h4 class="nsub" style="margin-top:14px">Payments</h4>${list.length?`<ul class="paylist">${list.map(p=>`<li><span>${shownDate(String(p.createdAt).slice(0,10))}</span><span>${shownDate(p.periodFrom)} – ${shownDate(p.periodTo)}${p.auto?' · auto-pay':''}</span><b>${rs(p.amount)}</b><span class="tag">${p.mode==='test'?'Test':'Paid'}</span></li>`).join('')}</ul>`:'<p class="place">No payments yet.</p>'}</section>`;}
 /* ===== Admin console ===== */
 function viewFilter(list){if(!S.viewAs)return list;const a=(S.access||{})[S.viewAs];if(!a)return list;if(needsBilling(a)&&billStatus(a).k==='overdue')return [];return list.filter(l=>seesLead(a,l));}
-function setViewAs(key){S.viewAs=key||null;S.leads=viewFilter(S.allLeads||S.leads);S._mc=null;S.view=key?'today':'admin';location.hash=S.view;render(true);window.scrollTo(0,0);}
+function setViewAs(key){S.viewAs=key||null;S.leads=viewFilter(S.allLeads||S.leads);S._mc=null;saveNav();S.view=key?'today':'admin';window.scrollTo(0,0);render(true);pushNav();}
 function viewAsBar(){if(!S.viewAs)return '';const a=(S.access||{})[S.viewAs]||{};const nm=(S.profiles||{})[S.viewAs]?.name;return `<div class="viewas">${icon('eye')}<span>Viewing as <b>${esc(nm||S.viewAs)}</b> · they see ${S.leads.length} leads${needsBilling(a)&&billStatus(a).k==='overdue'?' (nothing until they pay)':''}. Changes are off.</span><button class="btn" data-act="viewasexit">Back to admin view</button></div>`;}
 function adminView(){const keys=Object.keys(S.access||{}).sort();const rows=keys.map(k=>({k,a:accOf(k),p:(S.profiles||{})[k]||{}}));const t=todayIso();
  const paying=rows.filter(r=>needsBilling(r.a));const mrr=paying.reduce((n,r)=>n+(r.a.plan==='yearly'?(Number(r.a.yearPm)||BILL.yearDefault):Number(r.a.fee)),0);
@@ -2203,7 +2207,19 @@ function todayView(c){const nm=((S.viewAs?((S.profiles||{})[S.viewAs]?.name||S.v
  const banner=short?`<div class="twshort">${icon('alert-triangle')}<div><b>${short==='owner'?'Properties':'Tenants'} are short for matching.</b> ${readyT} tenant${readyT===1?'':'s'} and ${readyP} propert${readyP===1?'y':'ies'} are ready. ${short==='owner'?'Property':'Tenant'} calls come first in the list below.</div></div>`:'';
  return `<div class="head"><div><h1>${hi}${nm?', <span class="nodict">'+esc(nm)+'</span>':''}</h1><p class="sub">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})} · ${items.length} calls to make, in this order</p></div></div>
  <section class="twsec"><ol class="twlist one">${shown.map((it,i)=>{const l=it.l;return `<li class="twrow"><span class="twn">${i+1}</span><div class="twmain">${typeTag(l)}<b class="nodict">${esc(l.name||'No name')}</b><span class="tag tier t${it.tier}">${TIER[it.tier]}</span><small class="nodict">${esc(it.why)}</small></div><div class="twact">${phone(l.phone)?`<button class="btn" data-act="callwith" data-id="${esc(l.id)}">${icon('phone')}${tr('Call')}</button>`:''}<button class="btn primary" data-act="golead" data-id="${esc(l.id)}">${tr('Open')}${icon('chevron-right')}</button></div></li>`;}).join('')||`<li class="place">${tr('Nothing due. Nice work.')}</li>`}</ol>${items.length>25?`<button class="btn link" data-act="twmore">${S.twAll?'Show fewer':'Show all '+items.length}</button>`:''}</section>`;}
-function goLead(id){const l=S.byId.get(id);if(!l)return;S.view=isBroker(l)?'brokers':l.kind==='owner'?'properties':'tenants';S.tab='all';S.onlyClosed=l.status==='closed';S.query=phone(l.phone)||l.name||'';S.source='all';S.contact='all';location.hash=S.view;render(true);setTimeout(()=>{const el=document.querySelector(`#main [data-card="${CSS.escape(id)}"]`);el?.scrollIntoView({block:'start'});window.scrollBy(0,-12);if(el){el.classList.add('jumped');setTimeout(()=>el.classList.remove('jumped'),1800);}},60);}
+/* ===== Back / Forward: every page change is a browser history step that remembers the page,
+   its filters, how far down it was scrolled and an open property pop-up. */
+function navState(){return {rd:1,v:S.view,tab:S.tab,mtab:S.mtab,q:S.query||'',src:S.source,ct:S.contact,kf:S.kindFilter,oc:!!S.onlyClosed,sk:S.sortKey,sd:S.sortDir,df:S.dFrom||'',dt:S.dTo||'',lim:S.limit||20,y:Math.round(scrollY),m:S.modal?.type==='leadpop'?S.modal.id:null};}
+function saveNav(){try{history.replaceState(navState(),'','#'+S.view);}catch(e){}}
+function pushNav(){try{history.pushState(navState(),'','#'+S.view);}catch(e){}}
+function applyNav(s){S.view=s.v||'today';S.tab=s.tab||'incomplete';S.mtab=s.mtab||'open';S.query=s.q||'';S.source=s.src||'all';S.contact=s.ct||'all';S.kindFilter=s.kf||'all';S.onlyClosed=!!s.oc;if(s.sk)S.sortKey=s.sk;if(s.sd)S.sortDir=s.sd;S.dFrom=s.df||'';S.dTo=s.dt||'';S.datePop=false;S.limitKey=null;S.restoreLimit=s.lim||20;S.anchor=null;
+ if(s.m&&S.byId.has(s.m))S.modal={type:'leadpop',id:s.m};else if(S.modal?.type==='leadpop')S.modal=null;
+ render(true);renderLayer();const y=s.y||0;const go=n=>{window.scrollTo(0,y);if(Math.abs(scrollY-y)>4&&n>0){if(document.querySelector('#main [data-more]'))moreCards();requestAnimationFrame(()=>go(n-1));}};requestAnimationFrame(()=>go(8));}
+let navScrollT=0;addEventListener('scroll',()=>{clearTimeout(navScrollT);navScrollT=setTimeout(()=>{if(history.state&&history.state.rd){try{history.replaceState({...history.state,y:Math.round(scrollY)},'');}catch(e){}}},150);},{passive:true});
+addEventListener('popstate',e=>{const s=e.state;if(s&&s.rd){applyNav(s);return;}const v=location.hash.replace('#','');applyNav({v:VIEWS.includes(v)?v:'today',y:0});});
+function openLeadPop(id){if(!S.byId.has(id))return;saveNav();S.modal={type:'leadpop',id};renderLayer();pushNav();}
+function closeLeadPop(){if(history.state&&history.state.rd&&history.state.m){history.back();return;}S.modal=null;renderLayer();}
+function goLead(id){const l=S.byId.get(id);if(!l)return;saveNav();if(S.modal?.type==='leadpop')S.modal=null;renderLayer();S.view=isBroker(l)?'brokers':l.kind==='owner'?'properties':'tenants';S.tab='all';S.onlyClosed=l.status==='closed';S.query=phone(l.phone)||l.name||'';S.source='all';S.contact='all';window.scrollTo(0,0);render(true);pushNav();setTimeout(()=>{const el=document.querySelector(`#main [data-card="${CSS.escape(id)}"]`);el?.scrollIntoView({block:'start'});window.scrollBy(0,-12);saveNav();if(el){el.classList.add('jumped');setTimeout(()=>el.classList.remove('jumped'),1800);}},60);}
 /* ===== Profile ===== */
 function profileView(){const p=S.profile||{},u=FB.user;const how=(u?.providerData||[]).map(x=>x.providerId==='password'?'Email and password':x.providerId==='google.com'?'Google':x.providerId).join(', ');
  return `<div class="head"><div><h1>${tr('Profile')}</h1><p class="sub">Your details and language. Only you and the admin can see these.</p></div></div>
@@ -2352,8 +2368,9 @@ render(true);
 </script>
 <script>
 /* Matches: the whole home card opens that property's full card (buttons, menus and fields inside keep working). */
-document.addEventListener('click',e=>{const c=e.target.closest('[data-openhome]');if(!c||e.target.closest('button,select,input,textarea,a,label,summary,details,.hmnote'))return;if(window.getSelection&&String(window.getSelection()).length)return;goLead(c.dataset.openhome);});
-document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const c=e.target.closest&&e.target.closest('[data-openhome]');if(c&&e.target===c){e.preventDefault();goLead(c.dataset.openhome);}});
+document.addEventListener('click',e=>{const c=e.target.closest('[data-openhome]');if(!c||e.target.closest('button,select,input,textarea,a,label,summary,details,.hmnote'))return;if(window.getSelection&&String(window.getSelection()).length)return;openLeadPop(c.dataset.openhome);});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const c=e.target.closest&&e.target.closest('[data-openhome]');if(c&&e.target===c){e.preventDefault();openLeadPop(c.dataset.openhome);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.modal?.type==='leadpop'&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName||'')){closeLeadPop();}});
 document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.mnotetext)S.mnoteText=e.target.value;});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&e.target.dataset&&e.target.dataset.mnotetext){e.preventDefault();e.target.closest('.hmnote')?.querySelector('[data-act="mnotesave"]')?.click();}if(e.key==='Escape'&&e.target.dataset&&e.target.dataset.mnotetext){e.target.closest('.hmnote')?.querySelector('[data-act="mnotecancel"]')?.click();}});
 </script>
