@@ -1764,9 +1764,9 @@ document.addEventListener('click',async e=>{
  if(act==='mrestore'){const pid=b.dataset.pid,o=S.byId.get(pid);const ok=await mWrite(l.id,t=>{const hid={...(t.hiddenHomes||{})};delete hid[pid];return {hiddenHomes:hid};},'Brought back '+homeName(o),{pid});if(ok)toast(homeName(o)+' is back on the list.');render(true);return;}
  if(act==='mmore'){S.showAll=S.showAll||{};S.showAll[l.id]=!S.showAll[l.id];renderCard(l.id);return;}
  if(act==='mlogall'){S.mlogAll=S.mlogAll||{};S.mlogAll[l.id]=!S.mlogAll[l.id];renderCard(l.id);return;}
- if(act==='mnote'){const k=l.id+'|'+b.dataset.pid;S.mnote=S.mnote===k?null:k;render();setTimeout(()=>document.getElementById('hn-'+CSS.escape(k))?.focus(),30);return;}
+ if(act==='mnote'){const k=l.id+'|'+b.dataset.pid;S.mnote=S.mnote===k?null:k;render();setTimeout(()=>document.getElementById('hn-'+k)?.focus(),30);return;}
  if(act==='mnotecancel'){S.mnote=null;S.mnoteText='';render();return;}
- if(act==='mnotesave'){const pid=b.dataset.pid,ta=document.getElementById('hn-'+CSS.escape(l.id+'|'+pid));const txt=(ta?.value||'').trim();if(!txt){ta?.focus();return;}b.disabled=true;try{await mWrite(l.id,x=>({}),'Note: '+txt,{pid});S.mnote=null;S.mnoteText='';toast('Note added to this home.');}catch(e){b.disabled=false;toast('Could not save. Check your internet.');return;}render();return;}
+ if(act==='mnotesave'){const pid=b.dataset.pid,ta=document.getElementById('hn-'+l.id+'|'+pid);const txt=(ta?.value||'').trim();if(!txt){ta?.focus();return;}b.disabled=true;try{await mWrite(l.id,x=>({}),'Note: '+txt,{pid});S.mnote=null;S.mnoteText='';toast('Note added to this home.');}catch(e){b.disabled=false;toast('Could not save. Check your internet.');return;}render();return;}
  if(act==='mcsave'){const k=docKey(l.id),g=x=>(document.getElementById(x)?.value||'').trim();const text=g('mcn-'+k),pid=g('mch-'+k),out=document.querySelector(`input[name="mco-${k}"]:checked`)?.value||'spoke';let fu=g('mcf-'+k),what=g('mcw-'+k);
   const tm=localDay(new Date(Date.now()+864e5));if(out!=='spoke'){if(!fu)fu=tm;if(!what)what=out==='noanswer'?'Try calling again':'Call back. They were busy';}
   if(out==='spoke'&&!text){toast('Write what the tenant said before saving.');document.getElementById('mcn-'+k)?.focus();return;}
