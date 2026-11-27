@@ -639,7 +639,8 @@ a.brand{color:inherit;text-decoration:none;cursor:pointer;border-radius:12px}a.b
 .hmopen{margin-left:auto;display:inline-flex;align-items:center;gap:2px;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}.hmopen svg{width:15px;height:15px}.hm .select,.hm select,.hm button{cursor:pointer}
 [data-card].jumped{animation:jumpflash 1.8s ease}@keyframes jumpflash{0%,40%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:none}}
 .hmnote{margin-top:10px;display:flex;flex-direction:column;gap:8px;cursor:default}.hmnote textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;resize:vertical;min-height:72px}.hmnote textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--green-soft)}
-.leadpop{max-width:min(1100px,calc(100vw - 32px))!important;width:min(1100px,calc(100vw - 32px))!important}.leadpop .mhead{align-items:flex-start;gap:12px}.leadpop .mhead h2{margin:0}.leadpop .mhead .place{margin:2px 0 0}.leadpop [data-card]{margin:0;box-shadow:none}
+.leadpop{max-width:min(1100px,calc(100vw - 32px))!important;width:min(1100px,calc(100vw - 32px))!important}.leadpop .mhead{align-items:flex-start;gap:12px}.leadpop .mhead h2{margin:0}.leadpop .mhead .place{margin:2px 0 0}.leadpop [data-card]{margin:0;box-shadow:none;flex:0 0 auto;overflow:visible}
+html.modal-open,html.modal-open body{overflow:hidden!important}html.modal-open body{padding-right:var(--sbw,0px)}.overlay,.modal{overscroll-behavior:contain}
 </style>
 </head>
 <body>
@@ -1454,6 +1455,12 @@ function callbackHtml(){const m=S.modal,l=S.byId.get(m.id);if(!l)return '';const
  <div class="cbrow"><label class="field"><span class="lab">${icon('calendar')}Day</span><input id="cb-day" type="date" min="${add(0)}" value="${m.day}"></label><label class="field"><span class="lab">${icon('clock')}Time (optional)</span><input id="cb-time" type="time" value="${m.time||''}"></label></div>
  <label class="field"><span class="lab">${icon('message-square-text')}Note (optional)</span><input id="cb-note" placeholder="e.g. In a meeting, call after 6" value="${esc(m.note||'')}"></label>
  <div class="row"><button class="btn primary" data-act="cbok" data-id="${esc(l.id)}">${icon('bell')}Set reminder</button><button class="btn" data-act="closemodal">Cancel</button></div></section></div>`;}
+function lockBehind(on){const r=document.documentElement;if(on===r.classList.contains('modal-open'))return;if(on){const sw=innerWidth-r.clientWidth;r.style.setProperty('--sbw',sw+'px');r.classList.add('modal-open');}else{r.classList.remove('modal-open');r.style.removeProperty('--sbw');}}
+/* While a pop-up is open the wheel always scrolls the pop-up, wherever the pointer is. */
+document.addEventListener('wheel',e=>{const ov=[...document.querySelectorAll('#layer .overlay')].pop();if(!ov)return;const m=ov.querySelector('.modal');if(!m)return;
+ // let inner scroll boxes (a long list or text box inside the pop-up) scroll themselves first
+ let n=e.target;while(n&&n!==m&&m.contains(n)){const cs=getComputedStyle(n);if(/(auto|scroll)/.test(cs.overflowY)&&n.scrollHeight>n.clientHeight+1){const up=e.deltaY<0;if((up&&n.scrollTop>0)||(!up&&n.scrollTop+n.clientHeight<n.scrollHeight-1))return;}n=n.parentElement;}
+ const sc=m.scrollHeight>m.clientHeight+1?m:ov;e.preventDefault();sc.scrollTop+=e.deltaMode===1?e.deltaY*32:e.deltaY;},{passive:false});
 function renderLayer(){
  const L=document.getElementById('layer');let h='';
  if(S.modal?.type==='add'){
@@ -1490,6 +1497,7 @@ function renderLayer(){
  const keep=[...L.querySelectorAll('.overlay,.modal')].map(x=>x.scrollTop);const ae=document.activeElement,aid=ae&&L.contains(ae)?ae.id:null;let ss=null,se=null;try{ss=ae?.selectionStart;se=ae?.selectionEnd;}catch(e){}
  L.innerHTML=h;
  [...L.querySelectorAll('.overlay,.modal')].forEach((x,i)=>{if(keep[i])x.scrollTop=keep[i];});if(aid){const f=document.getElementById(aid);if(f){f.focus({preventScroll:true});try{if(ss!=null)f.setSelectionRange(ss,se);}catch(e){}}}fixIcons();
+ lockBehind(!!L.querySelector('.overlay'));
  if(S.modal2?.type==='maint'){const i=document.getElementById('maintamt');if(i&&document.activeElement!==i){i.focus();i.select();}}
 }
 function toast(text,undo){clearTimeout(S.toastTimer);S.toast={text,undo};S.toastTimer=setTimeout(()=>{S.toast=null;renderLayer();},undo?8000:5000);renderLayer();fixIcons();}
